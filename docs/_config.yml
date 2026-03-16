@@ -7,3 +7,7 @@ minima:
   nav_pages:
     - game_rules/game_rules.md
     - index.md
+  social_links:
+    - title: Three corners on GitHub
+      icon: github
+      url: "https://github.com/orange223171/three-corners"
