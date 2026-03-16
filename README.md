@@ -1,3 +1,3 @@
 # Три угла
 Три угла — минималистичная стратегия на поле из треугольников.
-## [Правила игры](docs/game_rules/game_rules.md)
+## [Правила игры](https://orange223171.github.io/three-corners/game_rules/game_rules.html)
