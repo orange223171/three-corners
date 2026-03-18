@@ -38,8 +38,7 @@ jobs:
 
       - name: Build docs
         run: |
-          mkdir output/docs
-          cargo doc --no-deps --workspace --document-private-items --target-dir output/docs
+          cargo doc --no-deps --workspace --document-private-items --target-dir output
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
