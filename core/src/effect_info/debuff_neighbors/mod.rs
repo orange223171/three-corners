@@ -1,4 +1,7 @@
+use serde::{Deserialize, Serialize};
+
 /// Информация об уменьшении характеристик соседних строений соперника
+#[derive(Serialize, Deserialize)]
 pub struct DebuffNeighborsInfo {
     /// Увеличение цены строительства
     build_price_increase: u16,

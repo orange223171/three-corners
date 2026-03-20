@@ -4,9 +4,12 @@
 //!   Определения для работы с конкретным экземпляром строения содержит модуль [building](crate::building)
 //! </div>
 
+use serde::{Deserialize, Serialize};
+
 use crate::effect_info::EffectInfo;
 
 /// Информация о строении
+#[derive(Serialize, Deserialize)]
 pub struct BuildingInfo {
     /// Название строения
     name: String,
@@ -54,5 +57,5 @@ pub struct BuildingInfo {
     minimum_authority_grab_n: u16,
 
     /// Эффекты строения
-    effects_info: Vec<EffectInfo>,
+    effects: Vec<EffectInfo>,
 }

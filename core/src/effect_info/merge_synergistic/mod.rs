@@ -1,4 +1,7 @@
+use serde::{Deserialize, Serialize};
+
 /// Информация об объединении строений в одно
+#[derive(Serialize, Deserialize)]
 pub struct MergeSynergisticInfo {
     /// Базовая цена уничтожения
     base_destroy_price: u16,

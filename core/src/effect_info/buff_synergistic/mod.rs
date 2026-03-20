@@ -1,4 +1,7 @@
+use serde::{Deserialize, Serialize};
+
 /// Информация об увеличении характеристик синергирующих строений
+#[derive(Serialize, Deserialize)]
 pub struct BuffSynergisticInfo {
     /// Увеличение стоимости уничтожения
     destroy_price_increase: u16,
