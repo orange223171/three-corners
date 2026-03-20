@@ -1,0 +1,45 @@
+{
+  "name": "windmill",
+
+  "base_build_price": 4,
+  "base_destroy_price": 5,
+  "base_grab_price": 2,
+
+  "base_economic_profit": 0,
+  "base_politic_profit": 0,
+  "base_authority_profit": 0,
+
+  "base_economic_grab_n": 2,
+  "base_politic_grab_n": 0,
+  "base_authority_grab_n": 0,
+
+  "minimum_build_price": 1,
+  "minimum_destroy_price": 1,
+  "minimum_grab_price": 1,
+
+  "minimum_economic_profit": 0,
+  "minimum_politic_profit": 0,
+  "minimum_authority_profit": 0,
+
+  "minimum_economic_grab_n": 1,
+  "minimum_politic_grab_n": 0,
+  "minimum_authority_grab_n": 0,
+
+  "effects": [
+    {
+      "buff_neighbor": {
+        "build_price_decrease": 0,
+        "destroy_price_increase": 0,
+        "grab_price_increase": 0,
+
+        "economic_profit_increase": 1,
+        "politic_profit_increase": 0,
+        "authority_profit_increase": 0,
+
+        "economic_grab_n_decrease": 0,
+        "politic_grab_n_decrease": 0,
+        "authority_grab_n_decrease": 0
+      }
+    }
+  ]
+}
