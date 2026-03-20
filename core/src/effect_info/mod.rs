@@ -1,4 +1,4 @@
-//! Содержит описания различных эффектов строений и синергий
+//! Содержит определения для работы с различными эффектами строений и синергий
 
 use crate::effect_info::{
     buff_neighbors::BuffNeighborsInfo, buff_synergistic::BuffSynergisticInfo,
