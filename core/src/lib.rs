@@ -1,6 +1,13 @@
-/// Major version
+//! Модуль core предоставляет основные определения для работы Трёх углов.
+
+/// Мажорная версия
 pub const VERSION_MAJOR: u32 = 0;
-/// Minor version
+/// Минорная версия
 pub const VERSION_MINOR: u32 = 1;
-/// Patch
+/// Патч
 pub const PATCH: u32 = 0;
+
+pub mod building;
+pub mod building_info;
+pub mod effect_info;
+pub mod synergy_info;
