@@ -14,7 +14,7 @@ pub mod merge_synergistic;
 
 /// Информация об эффекте
 #[derive(Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum EffectInfo {
     /// Объединение синергирующих строений в одно, используются новые характеристики для всех шести строений одновременно
     MergeSynergistic(MergeSynergisticInfo),

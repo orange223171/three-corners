@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::effect_info::EffectInfo;
 
+mod tests;
+
 /// Информация о строении
 #[derive(Serialize, Deserialize)]
 pub struct BuildingInfo {
