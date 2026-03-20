@@ -1,17 +1,17 @@
 {
   "name": "townhall",
 
-  "build_price": 0,
-  "destroy_price": 0,
-  "grab_price": 0,
+  "base_build_price": 0,
+  "base_destroy_price": 0,
+  "base_grab_price": 0,
 
-  "economic_profit": 1,
-  "politic_profit": 1,
-  "authority_profit": 1,
+  "base_economic_profit": 1,
+  "base_politic_profit": 1,
+  "base_authority_profit": 1,
 
-  "economic_grab_n": 0,
-  "politic_grab_n": 0,
-  "authority_grab_n": 0,
+  "base_economic_grab_n": 0,
+  "base_politic_grab_n": 0,
+  "base_authority_grab_n": 0,
 
   "minimum_build_price": 0,
   "minimum_destroy_price": 0,

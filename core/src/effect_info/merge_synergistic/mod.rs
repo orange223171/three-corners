@@ -1,23 +1,23 @@
 /// Информация об объединении строений в одно
 pub struct MergeSynergisticInfo {
     /// Базовая цена уничтожения
-    destroy_price: u16,
+    base_destroy_price: u16,
     /// Базовая цена захвата ресурса
-    grab_price: u16,
+    base_grab_price: u16,
 
     /// Базовая выработка экономического ресурса
-    economic_profit: u16,
+    base_economic_profit: u16,
     /// Базовая выработка политического ресурса
-    politic_profit: u16,
+    base_politic_profit: u16,
     /// Базовая выработка влияния
-    authority_profit: u16,
+    base_authority_profit: u16,
 
     /// Базовое количество захватываемого экономического ресурса
-    economic_grab_n: u16,
+    base_economic_grab_n: u16,
     /// Базовое количество захватываемого политического ресурса
-    politic_grab_n: u16,
+    base_politic_grab_n: u16,
     /// Базовое количество захватываемого влияния
-    authority_grab_n: u16,
+    base_authority_grab_n: u16,
 
     /// Минимальная цена уничтожения
     minimum_destroy_price: u16,
