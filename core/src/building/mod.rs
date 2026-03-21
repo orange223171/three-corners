@@ -10,6 +10,6 @@ pub struct Building {
     /// Строение построено в текущий раунд
     pub build_in_current_round: bool,
 
-    //Синергии, в которых состоит строение
+    /// Синергии, в которых состоит строение
     pub synergies: Vec<String>,
 }
