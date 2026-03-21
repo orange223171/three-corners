@@ -7,6 +7,7 @@ pub const VERSION_MINOR: u32 = 1;
 /// Патч
 pub const PATCH: u32 = 0;
 
+pub mod board;
 pub mod building;
 pub mod building_info;
 pub mod effect_info;
