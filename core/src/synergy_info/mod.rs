@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::effect_info::EffectInfo;
 
+mod tests;
+
 /// Информация о синергии
 #[derive(Serialize, Deserialize)]
 pub struct SynergyInfo {
