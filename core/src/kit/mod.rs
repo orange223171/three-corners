@@ -1,0 +1,15 @@
+use crate::kit::{building::BuildingKit, synergy::SynergyKit};
+
+pub mod building;
+pub mod synergy;
+
+/// # Набор игровых объектов
+/// Используется для хранения используемого в игровой сессии набора игровых объектов
+///
+/// ## Инициализация
+pub struct Kit {
+    /// Набор строений
+    building_kit: BuildingKit,
+    /// Набор синергий
+    synergy_kit: SynergyKit,
+}

@@ -2,13 +2,15 @@
 //!
 //! Определения для работы с конкретным экземпляром строения содержит модуль [building](crate::building)
 
+use std::iter::Map;
+
 use serde::{Deserialize, Serialize};
 
 use crate::effect_info::EffectInfo;
 
-mod tests;
-
-/// Информация о строении
+/// # Информация о строении
+///
+/// Используется для хранения характеристик строения
 #[derive(Serialize, Deserialize)]
 pub struct BuildingInfo {
     /// Название строения
@@ -59,3 +61,5 @@ pub struct BuildingInfo {
     /// Эффекты строения
     effects: Vec<EffectInfo>,
 }
+
+mod tests;
