@@ -3,13 +3,13 @@
 /// Строение
 pub struct Building {
     /// Название строения
-    name: String,
+    pub name: String,
     /// Игрок, установивший строение
-    player: String,
+    pub player: String,
 
     /// Строение построено в текущий раунд
-    build_in_current_round: bool,
+    pub build_in_current_round: bool,
 
     //Синергии, в которых состоит строение
-    synergies: Vec<String>,
+    pub synergies: Vec<String>,
 }
