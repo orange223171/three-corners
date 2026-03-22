@@ -9,7 +9,5 @@ pub const PATCH: u32 = 0;
 
 pub mod board;
 pub mod building;
-pub mod building_info;
-pub mod effect_info;
+pub mod info;
 pub mod kit;
-pub mod synergy_info;

@@ -6,7 +6,7 @@ use std::iter::Map;
 
 use serde::{Deserialize, Serialize};
 
-use crate::effect_info::EffectInfo;
+use crate::info::effect::EffectInfo;
 
 /// # Информация о строении
 ///

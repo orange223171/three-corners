@@ -1,6 +1,6 @@
 use std::iter::Map;
 
-use crate::synergy_info::SynergyInfo;
+use crate::info::synergy::SynergyInfo;
 
 /// # Набор синергий
 /// Используется для хранения используемого в игровой сессии набора синергий

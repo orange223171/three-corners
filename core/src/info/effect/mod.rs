@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::effect_info::{
+use crate::info::effect::{
     buff_neighbors::BuffNeighborsInfo, buff_synergistic::BuffSynergisticInfo,
     debuff_neighbors::DebuffNeighborsInfo, merge_synergistic::MergeSynergisticInfo,
 };
