@@ -9,7 +9,7 @@ pub mod synergy;
 /// ## Инициализация
 pub struct Kit {
     /// Набор строений
-    building_kit: BuildingKit,
+    pub building_kit: BuildingKit,
     /// Набор синергий
-    synergy_kit: SynergyKit,
+    pub synergy_kit: SynergyKit,
 }
