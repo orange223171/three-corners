@@ -1,5 +1,7 @@
 //! Содержит определения для работы с конкретным экземпляром строения
 
+use crate::synergy::Synergy;
+
 /// # Строение
 ///
 /// Содержит сведения о типе строения, сведения о текущем состоянии строения
@@ -17,5 +19,5 @@ pub struct Building {
     pub build_in_current_round: bool,
 
     /// Синергии, в которых состоит строение
-    pub synergies: Vec<String>,
+    pub synergies: Vec<Synergy>,
 }

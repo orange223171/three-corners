@@ -11,3 +11,4 @@ pub mod board;
 pub mod building;
 pub mod info;
 pub mod kit;
+pub mod synergy;
