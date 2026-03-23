@@ -5,16 +5,16 @@
   "effects": [
     {
       "buff_synergistic": {
-        "destroy_price_increase": 0,
-        "grab_price_increase": 1,
+        "destroy_price_effect": 0,
+        "grab_price_effect": 1,
 
-        "economic_profit_increase": 5,
-        "politic_profit_increase": 0,
-        "authority_profit_increase": 0,
+        "economic_profit_effect": 5,
+        "politic_profit_effect": 0,
+        "authority_profit_effect": 0,
 
-        "economic_grab_n_decrease": 0,
-        "politic_grab_n_decrease": 0,
-        "authority_grab_n_decrease": 0
+        "economic_grab_n_effect": 0,
+        "politic_grab_n_effect": 0,
+        "authority_grab_n_effect": 0
       }
     }
   ]

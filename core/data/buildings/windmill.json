@@ -28,17 +28,17 @@
   "effects": [
     {
       "buff_friend_neighbors": {
-        "build_price_decrease": 0,
-        "destroy_price_increase": 0,
-        "grab_price_increase": 0,
+        "build_price_effect": 0,
+        "destroy_price_effect": 0,
+        "grab_price_effect": 0,
 
-        "economic_profit_increase": 1,
-        "politic_profit_increase": 0,
-        "authority_profit_increase": 0,
+        "economic_profit_effect": 1,
+        "politic_profit_effect": 0,
+        "authority_profit_effect": 0,
 
-        "economic_grab_n_decrease": 0,
-        "politic_grab_n_decrease": 0,
-        "authority_grab_n_decrease": 0
+        "economic_grab_n_effect": 0,
+        "politic_grab_n_effect": 0,
+        "authority_grab_n_effect": 0
       }
     }
   ]
