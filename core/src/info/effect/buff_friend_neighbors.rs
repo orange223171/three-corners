@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-/// Информация об увеличении характеристик соседних дружественных строений
+/// Информация об изменении характеристик соседних дружественных строений
 #[derive(Serialize, Deserialize)]
-pub struct BuffNeighborsInfo {
+pub struct BuffFriendNeighborsInfo {
     /// Уменьшение цены строительства
     build_price_decrease: u16,
     /// Увеличение стоимости уничтожения

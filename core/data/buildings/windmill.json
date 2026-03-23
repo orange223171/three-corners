@@ -27,7 +27,7 @@
 
   "effects": [
     {
-      "buff_neighbors": {
+      "buff_friend_neighbors": {
         "build_price_decrease": 0,
         "destroy_price_increase": 0,
         "grab_price_increase": 0,

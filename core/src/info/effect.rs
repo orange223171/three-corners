@@ -3,13 +3,14 @@
 use serde::{Deserialize, Serialize};
 
 use crate::info::effect::{
-    buff_neighbors::BuffNeighborsInfo, buff_synergistic::BuffSynergisticInfo,
-    debuff_neighbors::DebuffNeighborsInfo, merge_synergistic::MergeSynergisticInfo,
+    buff_friend_neighbors::BuffFriendNeighborsInfo,
+    buff_opponent_neighbors::BuffOpponentNeighborsInfo, buff_synergistic::BuffSynergisticInfo,
+    merge_synergistic::MergeSynergisticInfo,
 };
 
-pub mod buff_neighbors;
+pub mod buff_friend_neighbors;
+pub mod buff_opponent_neighbors;
 pub mod buff_synergistic;
-pub mod debuff_neighbors;
 pub mod merge_synergistic;
 
 /// Информация об эффекте
@@ -18,10 +19,10 @@ pub mod merge_synergistic;
 pub enum EffectInfo {
     /// Объединение синергирующих строений в одно, используются новые характеристики для всех шести строений одновременно
     MergeSynergistic(MergeSynergisticInfo),
-    /// Увеличение характеристик соседних дружественных строений
-    BuffNeighbors(BuffNeighborsInfo),
-    /// Увеличение характеристик синергирующих строений
+    /// Изменение характеристик синергирующих строений
     BuffSynergistic(BuffSynergisticInfo),
-    /// Уменьшение характеристик соседних строений соперника
-    DebuffNeighbors(DebuffNeighborsInfo),
+    /// Изменение характеристик соседних дружественных строений
+    BuffFriendNeighbors(BuffFriendNeighborsInfo),
+    /// Изменение характеристик соседних строений соперника
+    BuffOpponentNeighbors(BuffOpponentNeighborsInfo),
 }
