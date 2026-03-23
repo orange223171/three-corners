@@ -1,37 +1,16 @@
 //! Содержит определения для работы с треугольником игрового поля
 
-use crate::building::Building;
+use crate::{board::triangle::effect::TriangleEffect, building::Building};
+
+pub mod effect;
 
 /// Треугольник
 pub struct Triangle {
-    /// Экземпляр строения или его отсутствие
-    building: Option<BuildingInstance>,
+    /// Cтроение или его отсутствие
+    building: Option<Building>,
 
-    /// Эффект цены, оказываемый на треугольник
-    price_effect: i16,
-}
-
-/// Треугольник, содержащий строение
-pub struct BuildingInstance {
-    /// Строение
-    building: Building,
-
-    /// Текущая стоимость разрушения
-    destroy_price: u16,
-    /// Текущая стоимость захвата
-    grab_price: u16,
-
-    /// Текущая выработка экономического ресурса
-    economic_profit: u16,
-    /// Текущая выработка политического ресурса
-    politic_profit: u16,
-    /// Текущая выработка влияния
-    authority_profit: u16,
-
-    /// Текущее количество захватываемого экономического ресурса
-    economic_grab_n: u16,
-    /// Текущее количество захватываемого политического ресурса
-    politic_grab_n: u16,
-    /// Текущее количество захватываемого влияния
-    authority_grab_n: u16,
+    /// Эффекты, оказываемые на треугольник
+    by_effect: Vec<TriangleEffect>,
+    /// Эффекты, оказываемые треугольником
+    on_effect: Vec<TriangleEffect>,
 }
