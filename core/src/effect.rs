@@ -1,8 +1,13 @@
-pub struct TriangleEffect {
-    /// x координата треугольника
-    x: u32,
-    /// y координата треугольника
-    y: u32,
+pub enum EffectObject {
+    Triangle(u32, u32),
+    Synergy(u32),
+}
+
+pub struct Effect {
+    /// Источник эффекта
+    source: EffectObject,
+    /// Цель эффекта
+    destination: EffectObject,
 
     /// Эффект на цену строительства
     build_price_effect: i16,

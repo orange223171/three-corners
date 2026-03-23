@@ -2,8 +2,6 @@
 //!
 //! Определения для работы с конкретным экземпляром строения содержит модуль [building](crate::building)
 
-use std::iter::Map;
-
 use serde::{Deserialize, Serialize};
 
 use crate::info::effect::EffectInfo;

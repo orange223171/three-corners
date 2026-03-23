@@ -1,3 +1,5 @@
+//! Содержит определения для взвимодействия с игровыми объектами
+
 use crate::kit::{building::BuildingKit, synergy::SynergyKit};
 
 pub mod building;
