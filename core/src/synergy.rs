@@ -2,6 +2,6 @@
 pub struct Synergy {
     /// Название синергии
     name: String,
-    /// id синергии в игровой сессии
-    id: u32,
+
+    buildings: [(u32, u32); 6],
 }
