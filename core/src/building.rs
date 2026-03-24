@@ -9,6 +9,7 @@ use crate::synergy::Synergy;
 /// Данный тип предназначен для передачи и хранения данных о самом факте существования строения.
 /// Для взаимодействия с текущими характеристиками конкретного строения (экземпляра),
 /// используйте [BuildingInstance](crate::board::triangle::BuildingInstance).
+#[derive(Debug, Clone)]
 pub struct Building {
     /// Название строения
     pub name: String,
