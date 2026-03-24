@@ -5,7 +5,10 @@
 
 use std::iter::Map;
 
-use crate::{effect::Effect, synergy::Synergy, triangle::Triangle};
+use crate::{building::Building, effect::Effect, synergy::Synergy};
+
+/// Треугольник
+type Triangle = Option<Building>;
 
 /// Игровое поле
 pub struct Board {
