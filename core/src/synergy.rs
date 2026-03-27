@@ -7,5 +7,5 @@ pub struct Synergy {
     pub name: String,
 
     /// Координаты влючаемых в синергию строений, задаются верхним треугольником
-    pub location: (u32, u32),
+    pub location: (usize, usize),
 }
