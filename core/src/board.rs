@@ -64,11 +64,11 @@ impl Board {
 
     /// Добавляет синергию на игровую доску
     /// # Ошибки
-    /// - Если в наборе игровых объектов не существует синергии с указанным именем, возвращает
-    /// - Если указанные координаты назодятся за пределами игровой доски, возвращает
-    pub fn add_sinergy(&mut self, id: u32, sinergy: Synergy) -> Result<(), &str> {
+    /// - Если в наборе игровых объектов не существует синергии с указанным именем, возвращает [SynergyNameUndefined](BoardError::SynergyNameUndefined)
+    /// - Если указанные координаты назодятся за пределами игровой доски, возвращает [SynergyOutBounds](BoardError::SynergyOutBoards)
+    pub fn add_sinergy(&mut self, id: u32, sinergy: Synergy) -> Result<(), BoardError> {
         if (sinergy.location.0 >= self.scale.0) || (sinergy.location.1 >= self.scale.1) {
-            return Result::Err("err");
+            return Result::Err(BoardError::SynergyOutBounds);
         }
 
         self.sinergies.insert(id, sinergy);
@@ -96,4 +96,12 @@ impl Board {
             Some(_) => Result::Ok(()),
         }
     }
+}
+
+pub enum BoardError {
+    EffectObjectNotFound,
+    EffectNotFound,
+    SynergyOutBounds,
+    SinergyNameUndefined,
+    SynergyNotfound,
 }
