@@ -1,7 +1,7 @@
-//! Содержит определения для работы с игровым полем
+//! Board definitions
 //!
-//! ## Координаты
-//! Ось X направлена от левого края к правому. Ось Y направлена от верхнего края к нижнему
+//! # Coordinates
+//! The X axis is directed from left edge to right. The Y axis is directed from top edge to bottom
 
 use std::collections::HashMap;
 
@@ -12,20 +12,21 @@ use crate::{
     synergy::Synergy,
 };
 
-/// Треугольник
+/// Triangle
 type Triangle = Option<Building>;
 
-/// Игровое поле
+/// Game board
 pub struct Board {
+    /// Scale of board
     scale: (usize, usize),
-    /// Поле
+    /// Board
     board: Vec<Vec<Triangle>>,
 
-    /// Набор игровых объектов для данного поля
+    /// Kit of the board
     kit: Kit,
-    /// Список всех синергий на поле
+    /// List of all sinergies on the board. The key is a id of synergy on the board
     sinergies: HashMap<u32, Synergy>,
-    /// Список всех эффектов на поле
+    /// List of all effects on the board. The key is a id of effect on the board
     effects: HashMap<u32, Effect>,
 }
 
@@ -131,6 +132,7 @@ impl Board {
     }
 }
 
+/// Board error
 pub enum BoardError {
     EffectObjectNotFound,
     EffectNotFound,
