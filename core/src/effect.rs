@@ -1,32 +1,32 @@
 pub enum EffectObject {
-    Triangle(u32, u32),
+    Triangle(usize, usize),
     Synergy(u32),
 }
 
 pub struct Effect {
     /// Источник эффекта
-    source: EffectObject,
+    pub source: EffectObject,
     /// Цель эффекта
-    destination: EffectObject,
+    pub destination: EffectObject,
 
     /// Эффект на цену строительства
-    build_price_effect: i16,
+    pub build_price_effect: i16,
     /// Эффект на цену уничтожения
-    destroy_price_effect: i16,
+    pub destroy_price_effect: i16,
     /// Эффект на цену захвата ресурса
-    grab_price_effect: i16,
+    pub grab_price_effect: i16,
 
     /// Эффект на выработку экономического ресурса
-    economic_profit_effect: i16,
+    pub economic_profit_effect: i16,
     /// Эффект на выработку политического ресурса
-    politic_profit_effect: i16,
+    pub politic_profit_effect: i16,
     /// Эффект на выработку влияния
-    authority_profit_effect: i16,
+    pub authority_profit_effect: i16,
 
     /// Эффект на количество захватываемого экономического ресурса
-    economic_grab_n_effect: i16,
+    pub economic_grab_n_effect: i16,
     /// Эффект на количество захватываемого политического ресурса
-    politic_grab_n_effect: i16,
+    pub politic_grab_n_effect: i16,
     /// Эффект на количество захватываемого влияния
-    authority_grab_n_effect: i16,
+    pub authority_grab_n_effect: i16,
 }

@@ -1,12 +1,16 @@
-use std::iter::Map;
+use std::collections::HashMap;
 
 use crate::info::building::BuildingInfo;
 
-/// # Набор строений
-/// Используется для хранения используемого в игровой сессии набора строений.
-///
-/// ## Инициализация
+/// A building kit
+/// # Initialization
 pub struct BuildingKit {
-    /// Набор, ключом является название строения
-    kit: Map<String, BuildingInfo>,
+    /// A kit. A key is a name of building
+    kit: HashMap<String, BuildingInfo>,
+}
+
+impl BuildingKit {
+    pub fn kit(&self) -> &HashMap<String, BuildingInfo> {
+        &self.kit
+    }
 }

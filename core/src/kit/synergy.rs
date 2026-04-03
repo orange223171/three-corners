@@ -1,12 +1,16 @@
-use std::iter::Map;
+use std::collections::HashMap;
 
 use crate::info::synergy::SynergyInfo;
 
-/// # Набор синергий
-/// Используется для хранения используемого в игровой сессии набора синергий
-///
-/// ## Инициализация
+/// A synergy kit
+/// # Initialization
 pub struct SynergyKit {
-    /// Набор, ключом является название синергии
-    kit: Map<String, SynergyInfo>,
+    /// A kit. A key is a name of synergy
+    kit: HashMap<String, SynergyInfo>,
+}
+
+impl SynergyKit {
+    pub fn kit(&self) -> &HashMap<String, SynergyInfo> {
+        &self.kit
+    }
 }
