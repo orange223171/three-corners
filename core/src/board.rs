@@ -45,12 +45,39 @@ impl Board {
     }
 
     /// Returns a reference on triangle with specified coordinates
-    pub fn triangle(&self, coordinates: (usize, usize)) -> &Triangle {
-        &self.board[coordinates.0][coordinates.1]
+    /// # Errors
+    /// - if specified coordinates out of board's bounds returns [SynergyOutBounds](BoardError::SynergyOutOfBounds)
+    pub fn triangle(&self, coordinates: (usize, usize)) -> Result<&Triangle, BoardError> {
+        if (coordinates.0 >= self.scale.0) || (coordinates.1 >= self.scale.1) {
+            return Result::Err(BoardError::SynergyOutOfBounds);
+        }
+
+        Result::Ok(&self.board[coordinates.0][coordinates.1])
     }
-    /// Returns a mutable reference on triangle with specified coordinates
-    pub fn mut_triangle(&mut self, coordinates: (usize, usize)) -> &mut Triangle {
-        &mut self.board[coordinates.0][coordinates.1]
+
+    /// Sets a triangle with specified coordinates to specified state
+    /// # Errors
+    /// - if specified coordinates out of board's bounds returns [SynergyOutBounds](BoardError::SynergyOutOfBounds)
+    /// - if name of building in specified state of triangle doesn't exist in the kit returns
+    /// [BuildingNameUndefined](BoardError::BuildingNameUndefined)
+    pub fn set_triangle(
+        &mut self,
+        triangle: Triangle,
+        coordinates: (usize, usize),
+    ) -> Result<(), BoardError> {
+        if (coordinates.0 >= self.scale.0) || (coordinates.1 >= self.scale.1) {
+            return Result::Err(BoardError::SynergyOutOfBounds);
+        }
+
+        if let Some(building) = &triangle {
+            if self.kit.building_kit.kit().get(&building.name).is_none() {
+                return Result::Err(BoardError::BuildingNameUndefined);
+            }
+        }
+
+        self.board[coordinates.0][coordinates.1] = triangle;
+
+        Result::Ok(())
     }
 
     /// Returns a reference on the kit
@@ -134,6 +161,7 @@ impl Board {
 
 /// A board error
 pub enum BoardError {
+    BuildingNameUndefined,
     EffectObjectNotFound,
     EffectNotFound,
     SynergyOutOfBounds,
