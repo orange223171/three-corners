@@ -13,20 +13,20 @@ use crate::{
 };
 
 /// A triangle
-type Triangle = Option<Building>;
+pub type Triangle = Option<Building>;
 
 /// A game board
 pub struct Board {
-    /// Scale of board
+    /// A scale of the board
     scale: (usize, usize),
-    /// Board
+    /// A board
     board: Vec<Vec<Triangle>>,
 
-    /// Kit of the board
+    /// A kit of the board
     kit: Kit,
-    /// List of all sinergies on the board. The key is a id of synergy on the board
+    /// A list of all sinergies on the board. The key is a id of synergy on the board
     sinergies: HashMap<u32, Synergy>,
-    /// List of all effects on the board. The key is a id of effect on the board
+    /// A list of all effects on the board. The key is a id of effect on the board
     effects: HashMap<u32, Effect>,
 }
 
