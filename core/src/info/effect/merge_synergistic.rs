@@ -6,40 +6,40 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 pub struct MergeSynergisticInfo {
     /// A base destoy price of the building
-    base_destroy_price: u16,
+    pub base_destroy_price: u32,
     /// A base grab price of the building
-    base_grab_price: u16,
+    pub base_grab_price: u32,
 
     /// A base economic profit of the building
-    base_economic_profit: u16,
+    pub base_economic_profit: u32,
     /// A base politic profit of the building
-    base_politic_profit: u16,
+    pub base_politic_profit: u32,
     /// A base authority profit of the building
-    base_authority_profit: u16,
+    pub base_authority_profit: u32,
 
     /// A base grab number of economic of the building
-    base_economic_grab_n: u16,
+    pub base_economic_grab_n: u32,
     /// A base grab number of politic of the building
-    base_politic_grab_n: u16,
+    pub base_politic_grab_n: u32,
     /// A base grab number of authority of the building
-    base_authority_grab_n: u16,
+    pub base_authority_grab_n: u32,
 
     /// A minimal destoy price of the building
-    minimum_destroy_price: u16,
+    pub minimum_destroy_price: u32,
     /// A minimal grab price of the building
-    minimum_grab_price: u16,
+    pub minimum_grab_price: u32,
 
     /// A minimal economic profit of the building
-    minimum_economic_profit: u16,
+    pub minimum_economic_profit: u32,
     /// A minimal politic profit of the building
-    minimum_politic_profit: u16,
+    pub minimum_politic_profit: u32,
     /// A minimal authority profit of the building
-    minimum_authority_profit: u16,
+    pub minimum_authority_profit: u32,
 
     /// A minimal grab number of economic of the building
-    minimum_economic_grab_n: u16,
+    pub minimum_economic_grab_n: u32,
     /// A minimal grab number of politic of the building
-    minimum_politic_grab_n: u16,
+    pub minimum_politic_grab_n: u32,
     /// A minimal grab number of authority of the building
-    minimum_authority_grab_n: u16,
+    pub minimum_authority_grab_n: u32,
 }

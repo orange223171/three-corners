@@ -8,12 +8,12 @@ use crate::info::effect::EffectInfo;
 #[derive(Serialize, Deserialize)]
 pub struct SynergyInfo {
     /// A name of the synergy
-    name: String,
+    pub name: String,
     /// A set of buildings that combine to the synergy
-    buildings: [String; 6],
+    pub buildings: [String; 6],
 
     /// Synergy's effects
-    effects: Vec<EffectInfo>,
+    pub effects: Vec<EffectInfo>,
 }
 
 #[cfg(test)]

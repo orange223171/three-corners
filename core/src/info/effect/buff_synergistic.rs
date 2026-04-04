@@ -6,21 +6,21 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 pub struct BuffSynergisticInfo {
     /// Delta of destroy price
-    destroy_price_effect: i16,
+    pub destroy_price_effect: i32,
     /// Delta of grab price
-    grab_price_effect: i16,
+    pub grab_price_effect: i32,
 
     /// Delta of economic profit
-    economic_profit_effect: i16,
+    pub economic_profit_effect: i32,
     /// Delta of politic profit
-    politic_profit_effect: i16,
+    pub politic_profit_effect: i32,
     /// Delta of authority profit
-    authority_profit_effect: i16,
+    pub authority_profit_effect: i32,
 
     /// Delta of grab number of economic
-    economic_grab_n_effect: i16,
+    pub economic_grab_n_effect: i32,
     /// Delta of grab number of politic
-    politic_grab_n_effect: i16,
+    pub politic_grab_n_effect: i32,
     /// Delta of grab number of authority
-    authority_grab_n_effect: i16,
+    pub authority_grab_n_effect: i32,
 }
