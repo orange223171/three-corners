@@ -1,11 +1,11 @@
-//! Предоставляет базовые определения для работы Трёх углов.
+//! Contains base definitions for Three Corners
 
-/// Мажорная версия
+/// The major version
 pub const VERSION_MAJOR: u32 = 0;
-/// Минорная версия
+/// The minor version
 pub const VERSION_MINOR: u32 = 1;
-/// Патч
-pub const PATCH: u32 = 0;
+/// The patch version
+pub const VERSION_PATCH: u32 = 0;
 
 pub mod board;
 pub mod building;

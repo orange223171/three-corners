@@ -1,4 +1,4 @@
-//! Содержит определения для взвимодействия с игровыми объектами
+//! Kit definitions
 
 use crate::kit::{building::BuildingKit, synergy::SynergyKit};
 

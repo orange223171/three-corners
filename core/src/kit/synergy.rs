@@ -1,3 +1,5 @@
+//! Synergy kit definitions
+
 use std::collections::HashMap;
 
 use crate::info::synergy::SynergyInfo;
@@ -10,6 +12,7 @@ pub struct SynergyKit {
 }
 
 impl SynergyKit {
+    /// Return the kit of sinergies
     pub fn kit(&self) -> &HashMap<String, SynergyInfo> {
         &self.kit
     }

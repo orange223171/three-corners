@@ -1,11 +1,13 @@
-//! Предоставляет структуру [Synergy] для записи данных о типе синергии и её положения на поле
+//! Synergy definitions
 
-/// # Синергия
+/// A synergy
 #[derive(Debug)]
 pub struct Synergy {
-    /// Название синергии
+    /// A name of the synergy from kit of the board
     pub name: String,
 
-    /// Координаты влючаемых в синергию строений, задаются верхним треугольником
+    /// Coordinates of the synergy on the board
+    ///
+    /// Coordinates of synergy is coordinates of top triangle
     pub location: (usize, usize),
 }

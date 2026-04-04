@@ -1,26 +1,28 @@
+//! Info of buff to neighbors buildings of opponent definitions
+
 use serde::{Deserialize, Serialize};
 
-/// Информация об изменении характеристик соседних строений соперника
+/// An info of buff to neighbors buildings of opponent
 #[derive(Serialize, Deserialize)]
 pub struct BuffOpponentNeighborsInfo {
-    /// Увеличение цены строительства
+    /// Delta of build price
     build_price_effect: i16,
-    /// Уменьшение стоимости уничтожения
+    /// Delta of destroy price
     destroy_price_effect: i16,
-    /// Уменьшение стоимости захвата ресурса
+    /// Delta of grab price
     grab_price_effect: i16,
 
-    /// Уменьшение выработки экономического ресурса
+    /// Delta of economic profit
     economic_profit_effect: i16,
-    /// Уменьшение выработки политического ресурса
+    /// Delta of politic profit
     politic_profit_effect: i16,
-    /// Уменьшение выработки влияния
+    /// Delta of authority profit
     authority_profit_effect: i16,
 
-    /// Увеличение количества захватываемого экономического ресурса
+    /// Delta of grab number of economic
     economic_grab_n_effect: i16,
-    /// Увеличение количества захватываемого политического ресурса
+    /// Delta of grab number of politic
     politic_grab_n_effect: i16,
-    /// Увеличение количества захватываемого влияния
+    /// Delta of grab number of authority
     authority_grab_n_effect: i16,
 }

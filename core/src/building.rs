@@ -1,22 +1,16 @@
-//! Содержит определения для работы с конкретным экземпляром строения
+//! Building definitions
 
-/// # Строение
-///
-/// Содержит сведения о типе строения, сведения о текущем состоянии строения
-/// (синергии, в которых состоит строение, флаг постройки в текущем раунде), сведения о игроке, которому оно принадлежит.
-/// Данный тип предназначен для передачи и хранения данных о самом факте существования строения.
-/// Для взаимодействия с текущими характеристиками конкретного строения (экземпляра),
-/// используйте [BuildingInstance](crate::board::triangle::BuildingInstance).
+/// A building
 #[derive(Debug, Clone)]
 pub struct Building {
-    /// Название строения
+    /// A name of the building from kit of the board
     pub name: String,
-    /// Игрок, установивший строение
+    /// A player which is owner of the building
     pub player: String,
 
-    /// Строение построено в текущий раунд
+    /// Building is build in current round
     pub build_in_current_round: bool,
 
-    /// id синергий, в которых состоит строение
+    /// Synergies' id on the board include in which the building
     pub synergies: Vec<u32>,
 }

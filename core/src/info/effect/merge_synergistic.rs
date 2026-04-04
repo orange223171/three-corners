@@ -1,43 +1,45 @@
+//! Info of merge synergistic buildings definitions
+
 use serde::{Deserialize, Serialize};
 
-/// Информация об объединении строений в одно
+/// An info of merge synergistic buildings
 #[derive(Serialize, Deserialize)]
 pub struct MergeSynergisticInfo {
-    /// Базовая цена уничтожения
+    /// A base destoy price of the building
     base_destroy_price: u16,
-    /// Базовая цена захвата ресурса
+    /// A base grab price of the building
     base_grab_price: u16,
 
-    /// Базовая выработка экономического ресурса
+    /// A base economic profit of the building
     base_economic_profit: u16,
-    /// Базовая выработка политического ресурса
+    /// A base politic profit of the building
     base_politic_profit: u16,
-    /// Базовая выработка влияния
+    /// A base authority profit of the building
     base_authority_profit: u16,
 
-    /// Базовое количество захватываемого экономического ресурса
+    /// A base grab number of economic of the building
     base_economic_grab_n: u16,
-    /// Базовое количество захватываемого политического ресурса
+    /// A base grab number of politic of the building
     base_politic_grab_n: u16,
-    /// Базовое количество захватываемого влияния
+    /// A base grab number of authority of the building
     base_authority_grab_n: u16,
 
-    /// Минимальная цена уничтожения
+    /// A minimal destoy price of the building
     minimum_destroy_price: u16,
-    /// Минимальная цена захвата ресурса
+    /// A minimal grab price of the building
     minimum_grab_price: u16,
 
-    /// Минимальная выработка экономического ресурса
+    /// A minimal economic profit of the building
     minimum_economic_profit: u16,
-    /// Минимальная выработка политического ресурса
+    /// A minimal politic profit of the building
     minimum_politic_profit: u16,
-    /// Минимальная выработка влияния
+    /// A minimal authority profit of the building
     minimum_authority_profit: u16,
 
-    /// Минимальное количество захватываемого экономического ресурса
+    /// A minimal grab number of economic of the building
     minimum_economic_grab_n: u16,
-    /// Минимальное количество захватываемого политического ресурса
+    /// A minimal grab number of politic of the building
     minimum_politic_grab_n: u16,
-    /// Минимальное количество захватываемого влияния
+    /// A minimal grab number of authority of the building
     minimum_authority_grab_n: u16,
 }

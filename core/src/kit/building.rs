@@ -1,3 +1,5 @@
+//! Building kit definitions
+
 use std::collections::HashMap;
 
 use crate::info::building::BuildingInfo;
@@ -10,6 +12,7 @@ pub struct BuildingKit {
 }
 
 impl BuildingKit {
+    /// Return the kit of building
     pub fn kit(&self) -> &HashMap<String, BuildingInfo> {
         &self.kit
     }

@@ -12,10 +12,10 @@ use crate::{
     synergy::Synergy,
 };
 
-/// Triangle
+/// A triangle
 type Triangle = Option<Building>;
 
-/// Game board
+/// A game board
 pub struct Board {
     /// Scale of board
     scale: (usize, usize),
@@ -31,7 +31,7 @@ pub struct Board {
 }
 
 impl Board {
-    /// Create empty board
+    /// Creates empty board
     pub fn new(scale: (usize, usize), kit: Kit) -> Self {
         let board: Vec<Vec<Triangle>> = vec![vec![Triangle::None; scale.1]; scale.0];
 
@@ -44,51 +44,51 @@ impl Board {
         }
     }
 
-    /// Return a reference on triangle with specified coordinates
+    /// Returns a reference on triangle with specified coordinates
     pub fn triangle(&self, coordinates: (usize, usize)) -> &Triangle {
         &self.board[coordinates.0][coordinates.1]
     }
-    /// Return a mutable reference on triangle with specified coordinates
+    /// Returns a mutable reference on triangle with specified coordinates
     pub fn mut_triangle(&mut self, coordinates: (usize, usize)) -> &mut Triangle {
         &mut self.board[coordinates.0][coordinates.1]
     }
 
-    /// Return a reference on the kit
+    /// Returns a reference on the kit
     pub fn kit(&self) -> &Kit {
         &self.kit
     }
 
-    /// Return a reference on sinergy with specified id or [None]
-    pub fn sinergy(&self, id: u32) -> Option<&Synergy> {
+    /// Returns a reference on synergy with specified id or [None]
+    pub fn synergy(&self, id: u32) -> Option<&Synergy> {
         self.sinergies.get(&id)
     }
 
-    /// Return a reference on effect with specified id or [None]
+    /// Returns a reference on effect with specified id or [None]
     pub fn effect(&self, id: u32) -> Option<&Effect> {
         self.effects.get(&id)
     }
 
-    /// Add synergy on the board
+    /// Adds synergy on the board
     /// # Errors
-    /// - if synergy with specified name doesn't exist in the kit return [SynergyNameUndefined](BoardError::SynergyNameUndefined)
-    /// - if specified coordinates out of board's bounds return [SynergyOutBounds](BoardError::SynergyOutOfBounds)
-    pub fn add_sinergy(&mut self, id: u32, sinergy: Synergy) -> Result<(), BoardError> {
-        if (sinergy.location.0 >= self.scale.0) || (sinergy.location.1 >= self.scale.1) {
+    /// - if synergy with specified name doesn't exist in the kit returns [SynergyNameUndefined](BoardError::SynergyNameUndefined)
+    /// - if specified coordinates out of board's bounds returns [SynergyOutBounds](BoardError::SynergyOutOfBounds)
+    pub fn add_synergy(&mut self, id: u32, synergy: Synergy) -> Result<(), BoardError> {
+        if (synergy.location.0 >= self.scale.0) || (synergy.location.1 >= self.scale.1) {
             return Result::Err(BoardError::SynergyOutOfBounds);
         }
 
-        if self.kit.synergy_kit.kit().get(&sinergy.name).is_none() {
-            return Result::Err(BoardError::SinergyNameUndefined);
+        if self.kit.synergy_kit.kit().get(&synergy.name).is_none() {
+            return Result::Err(BoardError::SynergyNameUndefined);
         }
 
-        self.sinergies.insert(id, sinergy);
+        self.sinergies.insert(id, synergy);
 
         Result::Ok(())
     }
 
-    /// Add effect on the board
+    /// Adds effect on the board
     /// # Errors
-    /// - if source of effect not found return [EffectObjectNotFound](BoardError::EffectObjectNotFound)
+    /// - if source of effect not found returns [EffectObjectNotFound](BoardError::EffectObjectNotFound)
     pub fn add_effect(&mut self, id: u32, effect: Effect) -> Result<(), BoardError> {
         if !self.effect_object_is_exist(&effect.source) {
             return Result::Err(BoardError::EffectNotFound);
@@ -103,19 +103,19 @@ impl Board {
         Result::Ok(())
     }
 
-    /// Remove sinergy from the board
+    /// Removes synergy from the board
     /// # Errors
-    /// - if sinergy doesn't exist on the board return [SynergyNotFound](BoardError::SynergyNotFound)
-    pub fn remove_sinergy(&mut self, id: u32) -> Result<(), BoardError> {
+    /// - if synergy doesn't exist on the board returns [SynergyNotFound](BoardError::SynergyNotFound)
+    pub fn remove_synergy(&mut self, id: u32) -> Result<(), BoardError> {
         match self.sinergies.remove(&id) {
             None => Result::Err(BoardError::SynergyNotfound),
             Some(_) => Result::Ok(()),
         }
     }
 
-    /// Remove effect from the board
+    /// Removes effect from the board
     /// # Errors
-    /// - if effect doesn't exist on the board return [EffectNotFound](BoardError::EffectNotFound)
+    /// - if effect doesn't exist on the board returns [EffectNotFound](BoardError::EffectNotFound)
     pub fn remove_effect(&mut self, id: u32) -> Result<(), BoardError> {
         match self.sinergies.remove(&id) {
             None => Result::Err(BoardError::EffectNotFound),
@@ -123,7 +123,7 @@ impl Board {
         }
     }
 
-    /// Return true if effect object is exist, else return false
+    /// Returns true if effect object is exist, else returns false
     fn effect_object_is_exist(&self, effect_object: &EffectObject) -> bool {
         match effect_object {
             EffectObject::Triangle(x, y) => (x < &self.scale.0) && (y < &self.scale.1),
@@ -132,11 +132,11 @@ impl Board {
     }
 }
 
-/// Board error
+/// A board error
 pub enum BoardError {
     EffectObjectNotFound,
     EffectNotFound,
     SynergyOutOfBounds,
-    SinergyNameUndefined,
+    SynergyNameUndefined,
     SynergyNotfound,
 }

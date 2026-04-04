@@ -1,24 +1,26 @@
+//! Info of buff to synergistic buildings definitions
+
 use serde::{Deserialize, Serialize};
 
-/// Информация об увеличении характеристик синергирующих строений
+/// An info of buff to synergistic buildings
 #[derive(Serialize, Deserialize)]
 pub struct BuffSynergisticInfo {
-    /// Увеличение стоимости уничтожения
+    /// Delta of destroy price
     destroy_price_effect: i16,
-    /// Увеличение стоимости захвата ресурса
+    /// Delta of grab price
     grab_price_effect: i16,
 
-    /// Увелечение выработки экономического ресурса
+    /// Delta of economic profit
     economic_profit_effect: i16,
-    /// Увелечение выработки политического ресурса
+    /// Delta of politic profit
     politic_profit_effect: i16,
-    /// Увелечение выработки влияния
+    /// Delta of authority profit
     authority_profit_effect: i16,
 
-    /// Уменьшение количества захватываемого экономического ресурса
+    /// Delta of grab number of economic
     economic_grab_n_effect: i16,
-    /// Уменьшение количества захватываемого политического ресурса
+    /// Delta of grab number of politic
     politic_grab_n_effect: i16,
-    /// Уменьшение количества захватываемого влияния
+    /// Delta of grab number of authority
     authority_grab_n_effect: i16,
 }

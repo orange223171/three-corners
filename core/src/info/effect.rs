@@ -1,4 +1,4 @@
-//! Содержит определения для работы с различными эффектами строений и синергий
+//! Effect info definitions
 
 use serde::{Deserialize, Serialize};
 
@@ -13,16 +13,16 @@ pub mod buff_opponent_neighbors;
 pub mod buff_synergistic;
 pub mod merge_synergistic;
 
-/// Информация об эффекте
+/// An effect info
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum EffectInfo {
-    /// Объединение синергирующих строений в одно, используются новые характеристики для всех шести строений одновременно
+    /// Represents a merge synergistic buildings into one
     MergeSynergistic(MergeSynergisticInfo),
-    /// Изменение характеристик синергирующих строений
+    /// Represents a buff to synergistic buildings
     BuffSynergistic(BuffSynergisticInfo),
-    /// Изменение характеристик соседних дружественных строений
+    /// Represents a buff to friend neighbors buildings
     BuffFriendNeighbors(BuffFriendNeighborsInfo),
-    /// Изменение характеристик соседних строений соперника
+    /// Represents a buff to neighbors buildings of opponent
     BuffOpponentNeighbors(BuffOpponentNeighborsInfo),
 }

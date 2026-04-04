@@ -1,15 +1,18 @@
-//! Содержит определения для работы с синергиями
+//! Synergy info definitions
 
 use serde::{Deserialize, Serialize};
 
 use crate::info::effect::EffectInfo;
 
-/// Информация о синергии
+/// A synergy info
 #[derive(Serialize, Deserialize)]
 pub struct SynergyInfo {
+    /// A name of the synergy
     name: String,
+    /// A set of buildings that combine to the synergy
     buildings: [String; 6],
 
+    /// Synergy's effects
     effects: Vec<EffectInfo>,
 }
 
