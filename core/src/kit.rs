@@ -67,10 +67,22 @@ impl Kit {
                         return Result::Err(KitError::BuildingNameUndefined);
                     }
                 }
+                self.synergy_kit
+                    .insert(synergy_info.name.clone(), synergy_info);
                 Result::Ok(())
             }
             serde_json::Result::Err(_) => Result::Err(KitError::JsonParsingError),
         }
+    }
+
+    /// Removes building from the kit
+    pub fn remove_building(&mut self, name: String) {
+        self.building_kit.remove(&name);
+    }
+
+    /// Removes synergy from the kit
+    pub fn remove_synergy(&mut self, name: String) {
+        self.synergy_kit.remove(&name);
     }
 }
 
