@@ -12,7 +12,14 @@ pub struct BuildingKit {
 }
 
 impl BuildingKit {
-    /// Return the kit of building
+    /// Creates empty kit of buildings
+    pub fn new() -> BuildingKit {
+        BuildingKit {
+            kit: HashMap::new(),
+        }
+    }
+
+    /// Returns the kit of buildings
     pub fn kit(&self) -> &HashMap<String, BuildingInfo> {
         &self.kit
     }

@@ -12,6 +12,13 @@ pub struct SynergyKit {
 }
 
 impl SynergyKit {
+    /// Creates empty kit of synergies
+    pub fn new() -> SynergyKit {
+        SynergyKit {
+            kit: HashMap::new(),
+        }
+    }
+
     /// Return the kit of sinergies
     pub fn kit(&self) -> &HashMap<String, SynergyInfo> {
         &self.kit

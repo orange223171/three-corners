@@ -70,7 +70,7 @@ impl Board {
         }
 
         if let Some(building) = &triangle {
-            if self.kit.building_kit.kit().get(&building.name).is_none() {
+            if self.kit.building_kit.get(&building.name).is_none() {
                 return Result::Err(BoardError::BuildingNameUndefined);
             }
         }
@@ -104,7 +104,7 @@ impl Board {
             return Result::Err(BoardError::SynergyOutOfBounds);
         }
 
-        if self.kit.synergy_kit.kit().get(&synergy.name).is_none() {
+        if self.kit.synergy_kit.get(&synergy.name).is_none() {
             return Result::Err(BoardError::SynergyNameUndefined);
         }
 
