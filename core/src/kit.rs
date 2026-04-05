@@ -1,6 +1,6 @@
 //! Kit definitions
 
-use std::collections::HashMap;
+use std::{collections::HashMap, fs};
 
 use crate::info::{building::BuildingInfo, synergy::SynergyInfo};
 
@@ -23,6 +23,31 @@ impl Kit {
             building_kit: HashMap::new(),
             synergy_kit: HashMap::new(),
         }
+    }
+
+    /// Creates kit from JSON-files
+    ///
+    /// Files must be located in buildings/ and synergies/ directories on the path
+    pub fn from_files(path: String) -> Result<Kit, KitError> {
+        let mut kit = Kit::new();
+
+        for file in fs::read_dir(path.clone() + "/buildings").unwrap() {
+            kit.add_building(
+                fs::read_to_string(file.unwrap().path().to_str().unwrap())
+                    .unwrap()
+                    .as_str(),
+            )?;
+        }
+
+        for file in fs::read_dir(path + "/synergies").unwrap() {
+            kit.add_synergy(
+                fs::read_to_string(file.unwrap().path().to_str().unwrap())
+                    .unwrap()
+                    .as_str(),
+            )?;
+        }
+
+        Result::Ok(kit)
     }
 
     /// Returns reference on the building kit
