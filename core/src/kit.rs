@@ -28,10 +28,22 @@ impl Kit {
     /// Creates kit from JSON-files
     ///
     /// Files must be located in buildings/ and synergies/ directories on the path
+    ///
+    /// # Errors
+    /// - if building's name undefiend returns [BuildingNameUndefined](KitError::BuildingNameUndefined)
+    /// - if effect's name undefined returns [EffectNameUndefined](KitError::EffectNameUndefined)
+    /// - if JSON is uncorrected returns [JsonParsingError](KitError::JsonParsingError)
+    ///
+    /// # Example
+    /// ```
+    /// use core::kit::Kit;
+    /// let kit = Kit::from_files(String::from("data/")).unwrap();
+    /// assert!(true);
+    /// ```
     pub fn from_files(path: String) -> Result<Kit, KitError> {
         let mut kit = Kit::new();
 
-        for file in fs::read_dir(path.clone() + "/buildings").unwrap() {
+        for file in fs::read_dir(path.clone() + "buildings/").unwrap() {
             kit.add_building(
                 fs::read_to_string(file.unwrap().path().to_str().unwrap())
                     .unwrap()
@@ -39,7 +51,7 @@ impl Kit {
             )?;
         }
 
-        for file in fs::read_dir(path + "/synergies").unwrap() {
+        for file in fs::read_dir(path + "synergies/").unwrap() {
             kit.add_synergy(
                 fs::read_to_string(file.unwrap().path().to_str().unwrap())
                     .unwrap()
@@ -79,7 +91,7 @@ impl Kit {
     /// # Errors
     /// - if building's name undefiend returns [BuildingNameUndefined](KitError::BuildingNameUndefined)
     /// - if effect's name undefined returns [EffectNameUndefined](KitError::EffectNameUndefined)
-    /// - if JSON is uncorrected returns [JsonParsingError](KitError::JsonParsingError
+    /// - if JSON is uncorrected returns [JsonParsingError](KitError::JsonParsingError)
     pub fn add_synergy(&mut self, json: &str) -> Result<(), KitError> {
         match serde_json::from_str::<SynergyInfo>(json) {
             serde_json::Result::Ok(synergy_info) => {
@@ -112,8 +124,22 @@ impl Kit {
 }
 
 /// A kit error
+#[derive(Debug)]
 pub enum KitError {
     BuildingNameUndefined,
     EffectNameUndefined,
     JsonParsingError,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    #[test]
+    fn kit_from_dir() {
+        let _ = fs::read_to_string("data/buildings/halltown.json");
+        let _kit = Kit::from_files(String::from("data/")).unwrap();
+        assert!(true);
+    }
 }

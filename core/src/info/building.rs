@@ -58,8 +58,8 @@ pub struct BuildingInfo {
     pub effects: Vec<EffectInfo>,
 }
 
+#[cfg(test)]
 mod tests {
-    #[cfg(test)]
     use super::*;
 
     #[test]
