@@ -37,6 +37,7 @@ impl Kit {
     /// # Example
     /// ```
     /// use core::kit::Kit;
+    ///
     /// let kit = Kit::from_files(String::from("data/")).unwrap();
     /// assert!(true);
     /// ```

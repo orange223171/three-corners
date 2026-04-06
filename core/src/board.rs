@@ -160,6 +160,7 @@ impl Board {
 }
 
 /// A board error
+#[derive(Debug)]
 pub enum BoardError {
     BuildingNameUndefined,
     EffectObjectNotFound,
