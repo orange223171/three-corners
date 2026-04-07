@@ -4,9 +4,6 @@ use std::{collections::HashMap, fs};
 
 use crate::info::{building::BuildingInfo, synergy::SynergyInfo};
 
-pub mod building;
-pub mod synergy;
-
 /// A kit of the game objects
 /// # Initialization
 pub struct Kit {
