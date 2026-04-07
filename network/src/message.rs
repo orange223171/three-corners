@@ -15,4 +15,7 @@ pub enum Message {
     Grab(Vector),
 
     SetTriangle(Vector, Building),
+
+    Ok,
+    OperationDenied,
 }
