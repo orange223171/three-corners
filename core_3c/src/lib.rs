@@ -13,3 +13,4 @@ pub mod effect;
 pub mod info;
 pub mod kit;
 pub mod synergy;
+pub mod vector;
