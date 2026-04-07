@@ -1,5 +1,7 @@
 //! Synergy definitions
 
+use crate::vector::Vector;
+
 /// A synergy
 #[derive(Debug)]
 pub struct Synergy {
@@ -9,5 +11,5 @@ pub struct Synergy {
     /// Coordinates of the synergy on the board
     ///
     /// Coordinates of synergy is coordinates of top triangle
-    pub location: (usize, usize),
+    pub location: Vector,
 }

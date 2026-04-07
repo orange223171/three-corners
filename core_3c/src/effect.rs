@@ -1,9 +1,11 @@
 //! Effect definitions
 
+use crate::vector::Vector;
+
 /// An effect object
 pub enum EffectObject {
     /// Represents a [Triangle](crate::board::Triangle) like its coordinates on the board
-    Triangle(usize, usize),
+    Triangle(Vector),
     /// Represents a [Synergy](crate::synergy::Synergy) like its id on the board
     Synergy(u32),
 }

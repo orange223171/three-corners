@@ -10,6 +10,7 @@ use crate::{
     effect::{Effect, EffectObject},
     kit::Kit,
     synergy::Synergy,
+    vector::Vector,
 };
 
 /// A triangle
@@ -18,9 +19,9 @@ pub type Triangle = Option<Building>;
 /// A game board
 pub struct Board {
     /// A scale of the board
-    scale: (usize, usize),
+    scale: Vector,
     /// A board
-    board: Vec<Vec<Triangle>>,
+    board: Vec<Triangle>,
 
     /// A kit of the board
     kit: Kit,
@@ -32,8 +33,8 @@ pub struct Board {
 
 impl Board {
     /// Creates empty board
-    pub fn new(scale: (usize, usize), kit: Kit) -> Self {
-        let board: Vec<Vec<Triangle>> = vec![vec![Triangle::None; scale.1]; scale.0];
+    pub fn new(scale: Vector, kit: Kit) -> Self {
+        let board: Vec<Triangle> = vec![Triangle::None; (scale.x as usize) * (scale.y as usize)];
 
         Board {
             scale: scale,
@@ -46,38 +47,43 @@ impl Board {
 
     /// Returns a reference on triangle with specified coordinates
     /// # Errors
-    /// - if specified coordinates out of board's bounds returns [SynergyOutBounds](BoardError::SynergyOutOfBounds)
-    pub fn triangle(&self, coordinates: (usize, usize)) -> Result<&Triangle, BoardError> {
-        if (coordinates.0 >= self.scale.0) || (coordinates.1 >= self.scale.1) {
-            return Result::Err(BoardError::SynergyOutOfBounds);
+    /// - if specified coordinates out of board's bounds returns [OutBounds](BoardError::OutOfBounds)
+    pub fn triangle(&self, coordinates: Vector) -> Result<&Triangle, BoardError> {
+        match self
+            .board
+            .get((coordinates.y as usize * self.scale.x as usize) + coordinates.x as usize)
+        {
+            Some(triangle) => Result::Ok(triangle),
+            None => Result::Err(BoardError::SynergyOutOfBounds),
         }
-
-        Result::Ok(&self.board[coordinates.0][coordinates.1])
     }
 
     /// Sets a triangle with specified coordinates to specified state
     /// # Errors
-    /// - if specified coordinates out of board's bounds returns [SynergyOutBounds](BoardError::SynergyOutOfBounds)
+    /// - if specified coordinates out of board's bounds returns [OutBounds](BoardError::OutOfBounds)
     /// - if name of building in specified state of triangle doesn't exist in the kit returns
     /// [BuildingNameUndefined](BoardError::BuildingNameUndefined)
     pub fn set_triangle(
         &mut self,
         triangle: Triangle,
-        coordinates: (usize, usize),
+        coordinates: Vector,
     ) -> Result<(), BoardError> {
-        if (coordinates.0 >= self.scale.0) || (coordinates.1 >= self.scale.1) {
-            return Result::Err(BoardError::SynergyOutOfBounds);
-        }
-
         if let Some(building) = &triangle {
             if self.kit.building_kit().get(&building.name).is_none() {
                 return Result::Err(BoardError::BuildingNameUndefined);
             }
         }
 
-        self.board[coordinates.0][coordinates.1] = triangle;
-
-        Result::Ok(())
+        match self
+            .board
+            .get_mut((coordinates.y as usize * self.scale.x as usize) + coordinates.x as usize)
+        {
+            Some(setting_triangle) => {
+                *setting_triangle = triangle;
+                Result::Ok(())
+            }
+            None => Result::Err(BoardError::OutOfBounds),
+        }
     }
 
     /// Returns a reference on the kit
@@ -100,7 +106,7 @@ impl Board {
     /// - if synergy with specified name doesn't exist in the kit returns [SynergyNameUndefined](BoardError::SynergyNameUndefined)
     /// - if specified coordinates out of board's bounds returns [SynergyOutBounds](BoardError::SynergyOutOfBounds)
     pub fn add_synergy(&mut self, id: u32, synergy: Synergy) -> Result<(), BoardError> {
-        if (synergy.location.0 >= self.scale.0) || (synergy.location.1 >= self.scale.1) {
+        if (synergy.location.x >= self.scale.x) || (synergy.location.y >= self.scale.y + 1) {
             return Result::Err(BoardError::SynergyOutOfBounds);
         }
 
@@ -153,7 +159,9 @@ impl Board {
     /// Returns true if effect object is exist, else returns false
     fn effect_object_is_exist(&self, effect_object: &EffectObject) -> bool {
         match effect_object {
-            EffectObject::Triangle(x, y) => (x < &self.scale.0) && (y < &self.scale.1),
+            EffectObject::Triangle(coordinates) => {
+                (coordinates.x < self.scale.x) && (coordinates.y < self.scale.y)
+            }
             EffectObject::Synergy(id) => self.sinergies.get(&id).is_some(),
         }
     }
@@ -162,6 +170,7 @@ impl Board {
 /// A board error
 #[derive(Debug)]
 pub enum BoardError {
+    OutOfBounds,
     BuildingNameUndefined,
     EffectObjectNotFound,
     EffectNotFound,
