@@ -1,6 +1,6 @@
 //! Message definitions
 
-use core_3c::building::Building;
+use core_3c::{building::Building, vector::Vector};
 
 /// Raw message for send and recieve
 pub type RawMessage = [u8; 8192];
@@ -10,9 +10,9 @@ pub enum Message {
     VersionRequest,
     VersionResponce(u32, u32, u32),
 
-    Build(usize, usize, String),
-    Destroy(usize, usize),
-    Grab(usize, usize),
+    Build(Vector, String),
+    Destroy(Vector),
+    Grab(Vector),
 
-    UpdateTriangle(usize, usize, Building),
+    SetTriangle(Vector, Building),
 }
