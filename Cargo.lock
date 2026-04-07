@@ -3,7 +3,7 @@
 version = 4
 
 [[package]]
-name = "core-3c"
+name = "core_3c"
 version = "0.1.0"
 dependencies = [
  "serde",
@@ -26,7 +26,7 @@ checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
 name = "network"
 version = "0.1.0"
 dependencies = [
- "core-3c",
+ "core_3c",
 ]
 
 [[package]]
