@@ -1,6 +1,11 @@
 //! Message definitions
 
-use core_3c::{building::Building, vector::Vector};
+use serde::{Deserialize, Serialize, Serializer};
+
+use crate::message::{
+    build::BuildMessage, destroy::DestroyMessage, grab::GrabMessage,
+    set_triangle::SetTriangleMessage,
+};
 
 pub mod build;
 pub mod destroy;
@@ -11,16 +16,25 @@ pub mod set_triangle;
 pub type RawMessage = [u8; 8192];
 
 /// A network message
+#[derive(Debug, Serialize, Deserialize)]
 pub enum Message {
     VersionRequest,
     VersionResponce(u32, u32, u32),
 
-    Build(Vector, String),
-    Destroy(Vector),
-    Grab(Vector),
+    Build(BuildMessage),
+    Destroy(DestroyMessage),
+    Grab(GrabMessage),
 
-    SetTriangle(Vector, Building),
+    SetTriangle(SetTriangleMessage),
 
     Ok,
     OperationDenied,
+}
+
+impl Serializer for RawMessage {
+    type Ok = Self;
+}
+
+impl Deserializer for RawMessage {
+    type Ok = Self;
 }
