@@ -4,3 +4,6 @@ members = ["core_3c", "network"]
 
 [workspace.dependencies]
 core_3c = { path = "core_3c" }
+
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
