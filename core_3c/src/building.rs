@@ -1,7 +1,9 @@
 //! Building definitions
 
+use serde::{Deserialize, Serialize};
+
 /// A building
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Building {
     /// A name of the building from kit of the board
     pub name: String,

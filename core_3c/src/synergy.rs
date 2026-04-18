@@ -1,9 +1,11 @@
 //! Synergy definitions
 
+use serde::{Deserialize, Serialize};
+
 use crate::vector::Vector;
 
 /// A synergy
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Synergy {
     /// A name of the synergy from kit of the board
     pub name: String,

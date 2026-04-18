@@ -13,3 +13,4 @@ pub const PROTOCOL_VERSION_MAJOR: u32 = 0;
 pub const PROTOCOL_VERSION_MINOR: u32 = 1;
 
 pub mod message;
+pub mod raw_message;

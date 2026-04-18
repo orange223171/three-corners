@@ -2,8 +2,10 @@
 
 use std::ops::{Add, Sub};
 
+use serde::{Deserialize, Serialize};
+
 /// A 2D vector
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Vector {
     /// X coordinate
     pub x: u32,
