@@ -1,5 +1,6 @@
 //! Message definitions
 
+use core_3c::vector::Vector;
 use serde::{Deserialize, Serialize};
 
 use crate::message::{
