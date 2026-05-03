@@ -12,4 +12,5 @@ pub const PROTOCOL_VERSION_MAJOR: u32 = 0;
 /// The minor version of protocol
 pub const PROTOCOL_VERSION_MINOR: u32 = 1;
 
+mod bytes_represented;
 pub mod message;

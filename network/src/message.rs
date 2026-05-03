@@ -1,26 +1,31 @@
 //! Message definitions
 
-use core_3c::{building::Building, vector::Vector};
-
-pub mod build;
-pub mod destroy;
-pub mod grab;
-pub mod set_triangle;
-
-/// Raw representation of message for sending and recieving
-pub type RawMessage = [u8; 8192];
+use crate::bytes_represented::{
+    BytesRepresented, Error, build::BuildMessage, destroy::DestroyMessage, grab::GrabMessage,
+    set_triangle::SetTriangleMessage,
+};
 
 /// A network message
 pub enum Message {
     VersionRequest,
     VersionResponce(u32, u32, u32),
 
-    Build(Vector, String),
-    Destroy(Vector),
-    Grab(Vector),
+    Build(BuildMessage),
+    Destroy(DestroyMessage),
+    Grab(GrabMessage),
 
-    SetTriangle(Vector, Building),
+    SetTriangle(SetTriangleMessage),
 
     Ok,
     OperationDenied,
+}
+
+impl Message {
+    pub fn as_bytes(self) -> Vec<u8> {
+        todo!()
+    }
+
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+        todo!()
+    }
 }
