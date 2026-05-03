@@ -1,9 +1,13 @@
 [workspace]
 resolver = "3"
-members = ["core_3c", "network"]
+members = ["core_3c", "network/core", "network/client", "network/server"]
 
 [workspace.dependencies]
 core_3c = { path = "core_3c" }
+
+network_core = { path = "network/core" }
+network_client = { path = "network/client" }
+network_server = { path = "network/server" }
 
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
