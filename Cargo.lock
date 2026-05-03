@@ -27,7 +27,6 @@ name = "network"
 version = "0.1.0"
 dependencies = [
  "core_3c",
- "serde",
 ]
 
 [[package]]
