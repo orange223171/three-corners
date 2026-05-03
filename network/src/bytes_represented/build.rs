@@ -5,6 +5,7 @@ use core_3c::vector::Vector;
 use crate::bytes_represented::{BytesRepresented, Decoder, Error};
 
 /// A message about building
+#[derive(Debug)]
 pub struct BuildMessage {
     /// A location is coordinates of triangle which on sets building
     pub location: Vector,

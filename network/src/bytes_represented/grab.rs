@@ -5,6 +5,7 @@ use core_3c::vector::Vector;
 use crate::bytes_represented::{BytesRepresented, Error};
 
 /// A message about grabbing
+#[derive(Debug)]
 pub struct GrabMessage {
     /// A location is coordinates of triangle which on grabbing building
     pub location: Vector,

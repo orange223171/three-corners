@@ -6,6 +6,7 @@ use crate::bytes_represented::{
 };
 
 /// A network message
+#[derive(Debug)]
 pub enum Message {
     VersionRequest,
     VersionResponce(u32, u32, u32),

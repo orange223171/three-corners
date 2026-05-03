@@ -5,6 +5,7 @@ use core_3c::vector::Vector;
 use crate::bytes_represented::{BytesRepresented, Error};
 
 /// A message about destroying
+#[derive(Debug)]
 pub struct DestroyMessage {
     /// A location is coordinates of triangle which on destroying building
     pub location: Vector,

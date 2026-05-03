@@ -4,6 +4,7 @@ use core_3c::{board::Triangle, building::Building, vector::Vector};
 
 use crate::bytes_represented::{BytesRepresented, Error};
 
+#[derive(Debug)]
 pub struct SetTriangleMessage {
     pub location: Vector,
     pub triangle: Triangle,
