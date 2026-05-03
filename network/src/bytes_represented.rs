@@ -1,11 +1,13 @@
-use std::{error, fmt::Display};
+use std::fmt::Display;
 
 use core_3c::{building::Building, vector::Vector};
 
 pub mod build;
 pub mod destroy;
+pub mod error;
 pub mod grab;
 pub mod set_triangle;
+pub mod version_responce;
 
 /// A decoder counting current offset of data array
 pub(crate) struct Decoder {
@@ -363,4 +365,4 @@ impl Display for Error {
     }
 }
 
-impl error::Error for Error {}
+impl std::error::Error for Error {}
