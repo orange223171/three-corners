@@ -9,3 +9,5 @@ network_core = { workspace = true }
 network_client = { workspace = true }
 
 tokio = { workspace = true }
+
+sfml = { workspace = true }
