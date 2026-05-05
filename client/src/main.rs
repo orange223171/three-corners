@@ -7,9 +7,13 @@ use core_3c::{
 };
 use network_client::connection::Connection;
 use sfml::{
-    graphics::{Color, Image, RcSprite, RcTexture, RenderTarget, RenderWindow, Transformable},
+    graphics::{Color, RcSprite, RcTexture, RenderTarget, RenderWindow, Transformable},
     window::{ContextSettings, Event, Style, VideoMode},
 };
+
+use crate::texture_pack::TexturePack;
+
+mod texture_pack;
 
 #[tokio::main]
 async fn main() {
@@ -25,6 +29,8 @@ async fn main() {
         Vector { x: 11, y: 10 },
         Kit::from_files(String::from("core_3c/data/")).unwrap(),
     );
+
+    let texture_pack = TexturePack::from_kit(board.kit());
 
     let connection = Connection::init(&SocketAddr::new(
         IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
@@ -52,7 +58,7 @@ async fn main() {
                         .triangle(Vector { x: i, y: j })
                         .expect("out of bounds"),
                     Vector { x: i, y: j },
-                    &texture,
+                    &texture_pack,
                 );
             }
         }
@@ -65,21 +71,10 @@ fn draw_triangle(
     window: &mut RenderWindow,
     triangle: &Triangle,
     position: Vector,
-    texture: &RcTexture,
+    texture_pack: &TexturePack,
 ) {
-    let _texture = match triangle {
-        Some(building) => RcTexture::from_file(
-            (String::from("client/sprites/") + building.name.as_str() + ".png").as_str(),
-        )
-        .expect(
-            (String::from("client/sprites/") + building.name.as_str() + ".png not found").as_str(),
-        ),
-        None => {
-            RcTexture::from_file("client/sprites/triangle.png").expect("triangle.png not found")
-        }
-    };
-
-    let mut sprite = RcSprite::with_texture(texture);
+    let mut sprite =
+        RcSprite::with_texture(texture_pack.texture(triangle).expect("Not found texture"));
 
     sprite.set_position((
         100.0 + (position.x * 16) as f32,
