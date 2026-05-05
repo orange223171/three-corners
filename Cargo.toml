@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["core_3c", "network/core", "network/client", "network/server"]
+members = ["core_3c", "network/core", "network/client", "network/server", "client", "server"]
 
 [workspace.dependencies]
 core_3c = { path = "core_3c" }

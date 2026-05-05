@@ -21,6 +21,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
+name = "client"
+version = "0.1.0"
+dependencies = [
+ "core_3c",
+ "network_client",
+ "network_core",
+ "tokio",
+]
+
+[[package]]
 name = "core_3c"
 version = "0.1.0"
 dependencies = [
@@ -204,6 +214,13 @@ dependencies = [
  "serde",
  "serde_core",
  "zmij",
+]
+
+[[package]]
+name = "server"
+version = "0.1.0"
+dependencies = [
+ "network_client",
 ]
 
 [[package]]
