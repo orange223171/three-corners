@@ -34,9 +34,13 @@ impl Connection {
 
         tokio::spawn(Self::handling_loop(handler, read_reciever));
 
+        let std_tcp_listener = StdTcpListener::bind(socket).expect("Error to bind server");
+        std_tcp_listener
+            .set_nonblocking(true)
+            .expect("Error to set nonblocking");
+
         tokio::spawn(Self::connecting_loop(
-            TcpListener::from_std(StdTcpListener::bind(socket).expect("Error to bind server"))
-                .expect("Error to create async TcpListener"),
+            TcpListener::from_std(std_tcp_listener).expect("Error to create async TcpListener"),
             read_sender,
         ));
     }

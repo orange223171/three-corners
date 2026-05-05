@@ -286,7 +286,10 @@ dependencies = [
 name = "server"
 version = "0.1.0"
 dependencies = [
- "network_client",
+ "core_3c",
+ "network_core",
+ "network_server",
+ "tokio",
 ]
 
 [[package]]
