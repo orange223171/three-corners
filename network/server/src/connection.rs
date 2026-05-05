@@ -25,7 +25,10 @@ pub struct Connection {}
 
 impl Connection {
     pub fn init<
-        F: FnMut(Message, &SocketAddr, &HashMap<SocketAddr, mpsc::Sender<Message>>) + Send + 'static,
+        R: Future + Send + 'static,
+        F: FnMut(Message, &SocketAddr, &HashMap<SocketAddr, mpsc::Sender<Message>>) -> R
+            + Send
+            + 'static,
     >(
         socket: SocketAddr,
         handler: F,
@@ -120,7 +123,8 @@ impl Connection {
     }
 
     async fn handling_loop<
-        F: FnMut(Message, &SocketAddr, &HashMap<SocketAddr, mpsc::Sender<Message>>),
+        R: Future,
+        F: FnMut(Message, &SocketAddr, &HashMap<SocketAddr, mpsc::Sender<Message>>) -> R,
     >(
         mut message_handler: F,
         mut reciever: mpsc::Receiver<ConnectionsMessage>,
@@ -137,7 +141,7 @@ impl Connection {
                         connections_list.remove(&socket);
                     }
                     ConnectionsMessage::Message(socket, message) => {
-                        message_handler(message, &socket, &connections_list);
+                        message_handler(message, &socket, &connections_list).await;
                     }
                 },
                 None => break,

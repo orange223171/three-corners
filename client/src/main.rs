@@ -1,4 +1,7 @@
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::{
+    net::{IpAddr, Ipv4Addr, SocketAddr},
+    sync::Arc,
+};
 
 use core_3c::{
     board::{Board, Triangle},
@@ -6,10 +9,12 @@ use core_3c::{
     vector::Vector,
 };
 use network_client::connection::Connection;
+use network_core::message::Message;
 use sfml::{
-    graphics::{Color, RcSprite, RcTexture, RenderTarget, RenderWindow, Transformable},
+    graphics::{Color, RcSprite, RenderTarget, RenderWindow, Transformable},
     window::{ContextSettings, Event, Style, VideoMode},
 };
+use tokio::sync::Mutex;
 
 use crate::texture_pack::TexturePack;
 
@@ -25,18 +30,32 @@ async fn main() {
     )
     .unwrap();
 
-    let mut board = Board::new(
-        Vector { x: 11, y: 10 },
-        Kit::from_files(String::from("core_3c/data/")).unwrap(),
-    );
+    let kit = Kit::from_files(String::from("core_3c/data/")).unwrap();
+    let texture_pack = TexturePack::from_kit(&kit);
 
-    let texture_pack = TexturePack::from_kit(board.kit());
+    let board = Board::new(Vector { x: 11, y: 10 }, kit);
+    let board_mutex_connection = Arc::new(Mutex::new(board));
+    let board_mutex_drawing = board_mutex_connection.clone();
 
-    let connection = Connection::init(&SocketAddr::new(
+    let mut connection = Connection::init(&SocketAddr::new(
         IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
         23171,
     ))
     .unwrap();
+
+    tokio::spawn(async move {
+        loop {
+            match connection.reciever.recv().await {
+                Some(message) => {
+                    let mut board_lock = board_mutex_connection.lock().await;
+                    handler_message(message, &mut *board_lock);
+                }
+                None => break,
+            }
+        }
+    });
+
+    connection.sender.send(Message::Ok).await.unwrap();
 
     while window.is_open() {
         while let Some(event) = window.poll_event() {
@@ -47,14 +66,12 @@ async fn main() {
 
         window.clear(Color::rgb(255, 127, 127));
 
-        let texture =
-            RcTexture::from_file("client/sprites/triangle.png").expect("triangle.png not found");
-
         for i in 0..11 {
             for j in 0..10 {
+                let board_lock = board_mutex_drawing.lock().await;
                 draw_triangle(
                     &mut window,
-                    board
+                    &*board_lock
                         .triangle(Vector { x: i, y: j })
                         .expect("out of bounds"),
                     Vector { x: i, y: j },
@@ -93,4 +110,21 @@ fn draw_triangle(
     }
 
     window.draw(&sprite);
+}
+
+fn handler_message(message: Message, board: &mut Board) {
+    match message {
+        Message::Ok => todo!(),
+        Message::Error(error_message) => todo!(),
+        Message::VersionRequest => todo!(),
+        Message::VersionResponce(version_responce_message) => todo!(),
+        Message::Build(build_message) => todo!(),
+        Message::Destroy(destroy_message) => todo!(),
+        Message::Grab(grab_message) => todo!(),
+        Message::SetTriangle(set_triangle_message) => {
+            board
+                .set_triangle(set_triangle_message.triangle, set_triangle_message.location)
+                .unwrap();
+        }
+    }
 }

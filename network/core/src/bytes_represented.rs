@@ -34,7 +34,9 @@ impl Decoder {
 
 /// A structure that can be representate as bytes
 pub(crate) trait BytesRepresented {
+    /// Encodes struct into bytes array
     fn encode(self) -> Vec<u8>;
+    /// Decodes struct from bytes array
     fn decode(decoder: &mut Decoder, bytes: &[u8]) -> Result<Self, Error>
     where
         Self: Sized;
