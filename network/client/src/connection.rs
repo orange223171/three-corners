@@ -21,7 +21,11 @@ impl Connection {
         let (connection_sender, handler_reciever) = mpsc::channel::<Message>(32);
         let (handler_sender, connection_reciever) = mpsc::channel::<Message>(32);
 
-        let stream = TcpStream::from_std(StdTcpStream::connect(socket)?)?;
+        let std_stream = StdTcpStream::connect(socket)?;
+        std_stream
+            .set_nonblocking(true)
+            .expect("Error to set stream nonblocking");
+        let stream = TcpStream::from_std(std_stream)?;
 
         let (reading_stream, writing_stream) = stream.into_split();
 

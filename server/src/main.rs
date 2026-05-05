@@ -10,7 +10,7 @@ use tokio::sync::mpsc;
 #[tokio::main]
 async fn main() {
     Connection::init(
-        SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 23117),
+        SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 23171),
         message_handler,
     );
 
