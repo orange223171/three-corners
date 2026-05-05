@@ -8,7 +8,7 @@ use tokio::{io::AsyncReadExt, net::TcpStream};
 
 use network_core::message::Message;
 
-/// A clint connection
+/// A client connection
 pub struct Connection {
     /// A reciever for recieve Message from channel
     pub reciever: mpsc::Receiver<Message>,
@@ -17,7 +17,7 @@ pub struct Connection {
 }
 
 impl Connection {
-    pub fn from(socket: &SocketAddr) -> Result<Connection, std::io::Error> {
+    pub fn init(socket: &SocketAddr) -> Result<Connection, std::io::Error> {
         let (connection_sender, handler_reciever) = mpsc::channel::<Message>(32);
         let (handler_sender, connection_reciever) = mpsc::channel::<Message>(32);
 

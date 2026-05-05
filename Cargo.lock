@@ -98,6 +98,7 @@ version = "0.1.0"
 dependencies = [
  "core_3c",
  "network_core",
+ "tokio",
 ]
 
 [[package]]
