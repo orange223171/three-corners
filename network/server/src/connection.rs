@@ -14,28 +14,20 @@ use std::{
 };
 
 /// A message for updating connections list
-enum ConnectionsMessage {
-    Connected(SocketAddr, mpsc::Sender<Message>),
-    Disconnected(SocketAddr),
+pub enum ConnectionMessage {
+    Connect(SocketAddr, mpsc::Sender<Message>),
+    Disconnect(SocketAddr),
     Message(SocketAddr, Message),
 }
 
 /// A server connection
-pub struct Connection {}
+pub struct Connection {
+    pub reciever: mpsc::Receiver<ConnectionMessage>,
+}
 
 impl Connection {
-    pub fn init<
-        R: Future + Send,
-        F: FnMut(Message, &SocketAddr, &HashMap<SocketAddr, mpsc::Sender<Message>>) -> R
-            + Send
-            + 'static,
-    >(
-        socket: SocketAddr,
-        handler: F,
-    ) {
-        let (read_sender, read_reciever) = mpsc::channel::<ConnectionsMessage>(32);
-
-        tokio::spawn(Self::handling_loop(handler, read_reciever));
+    pub fn init(socket: SocketAddr) -> Self {
+        let (read_sender, read_reciever) = mpsc::channel::<ConnectionMessage>(32);
 
         let std_tcp_listener = StdTcpListener::bind(socket).expect("Error to bind server");
         std_tcp_listener
@@ -46,9 +38,13 @@ impl Connection {
             TcpListener::from_std(std_tcp_listener).expect("Error to create async TcpListener"),
             read_sender,
         ));
+
+        Self {
+            reciever: read_reciever,
+        }
     }
 
-    async fn connecting_loop(listener: TcpListener, read_sender: mpsc::Sender<ConnectionsMessage>) {
+    async fn connecting_loop(listener: TcpListener, read_sender: mpsc::Sender<ConnectionMessage>) {
         loop {
             match listener.accept().await {
                 Ok((stream, socket)) => {
@@ -57,7 +53,7 @@ impl Connection {
                     let (write_sender, write_reciever) = mpsc::channel::<Message>(32);
 
                     match read_sender
-                        .send(ConnectionsMessage::Connected(socket, write_sender))
+                        .send(ConnectionMessage::Connect(socket, write_sender))
                         .await
                     {
                         Ok(_) => (),
@@ -78,7 +74,7 @@ impl Connection {
 
     async fn reading_loop(
         mut stream: OwnedReadHalf,
-        read_sender: mpsc::Sender<ConnectionsMessage>,
+        read_sender: mpsc::Sender<ConnectionMessage>,
         socket: SocketAddr,
     ) {
         loop {
@@ -90,7 +86,7 @@ impl Connection {
             }
 
             match read_sender
-                .send(ConnectionsMessage::Message(
+                .send(ConnectionMessage::Message(
                     socket,
                     Message::from_bytes(&buf).expect("wrong message"),
                 ))
@@ -102,7 +98,7 @@ impl Connection {
         }
 
         match read_sender
-            .send(ConnectionsMessage::Disconnected(socket))
+            .send(ConnectionMessage::Disconnect(socket))
             .await
         {
             Ok(_) => todo!(),
@@ -116,33 +112,6 @@ impl Connection {
                 Some(message) => match stream.write(&message.as_bytes()).await {
                     Ok(_) => (),
                     Err(_) => break,
-                },
-                None => break,
-            }
-        }
-    }
-
-    async fn handling_loop<
-        R: Future,
-        F: FnMut(Message, &SocketAddr, &HashMap<SocketAddr, mpsc::Sender<Message>>) -> R,
-    >(
-        mut message_handler: F,
-        mut reciever: mpsc::Receiver<ConnectionsMessage>,
-    ) {
-        let mut connections_list: HashMap<SocketAddr, mpsc::Sender<Message>> = HashMap::new();
-
-        loop {
-            match reciever.recv().await {
-                Some(connection_message) => match connection_message {
-                    ConnectionsMessage::Connected(socket, sender) => {
-                        connections_list.insert(socket, sender);
-                    }
-                    ConnectionsMessage::Disconnected(socket) => {
-                        connections_list.remove(&socket);
-                    }
-                    ConnectionsMessage::Message(socket, message) => {
-                        message_handler(message, &socket, &connections_list).await;
-                    }
                 },
                 None => break,
             }
