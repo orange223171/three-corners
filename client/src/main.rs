@@ -112,6 +112,10 @@ fn draw_triangle(
     window.draw(&sprite);
 }
 
+fn handler_sfml_event(event: Event) {}
+
+async fn handler_message_loop(board_mutex: Arc<Mutex<Board>>) {}
+
 fn handler_message(message: Message, board: &mut Board) {
     match message {
         Message::Ok => todo!(),
