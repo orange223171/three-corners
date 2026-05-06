@@ -36,8 +36,22 @@ jobs:
           mdbook build --dest-dir ../output
           cd ..
 
-      - name: Install cmake
-        uses: jwlawson/actions-setup-cmake@v2
+      - name: Install sfml dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            libx11-dev \
+            libxrandr-dev \
+            libxinerama-dev \
+            libxcursor-dev \
+            libxi-dev \
+            libgl1-mesa-dev \
+            libudev-dev \
+            libfreetype6-dev \
+            libopenal-dev \
+            libflac-dev \
+            libvorbis-dev
 
       - name: Build docs
         run: |
