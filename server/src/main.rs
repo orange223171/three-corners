@@ -6,7 +6,7 @@ use std::{
 use core_3c::{building::Building, vector::Vector};
 use network_core::bytes_represented::set_triangle::SetTriangleMessage;
 use network_core::message::Message;
-use network_server::connection::{self, Connection};
+use network_server::connection::Connection;
 use tokio::sync::mpsc;
 
 #[tokio::main]

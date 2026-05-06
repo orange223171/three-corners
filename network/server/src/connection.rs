@@ -25,7 +25,7 @@ pub struct Connection {}
 
 impl Connection {
     pub fn init<
-        R: Future + Send + 'static,
+        R: Future + Send,
         F: FnMut(Message, &SocketAddr, &HashMap<SocketAddr, mpsc::Sender<Message>>) -> R
             + Send
             + 'static,

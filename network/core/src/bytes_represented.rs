@@ -368,3 +368,30 @@ impl Display for Error {
 }
 
 impl std::error::Error for Error {}
+
+#[cfg(test)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn u32_encode() {
+        let value: u32 = 0x12345678;
+        let bytes: Vec<u8> = vec![0x12, 0x34, 0x56, 0x78];
+
+        assert_eq!(value.encode(), bytes)
+    }
+
+    #[test]
+    fn u32_decode() {
+        let value: u32 = 0x12345678;
+        let bytes: [u8; 4] = [0x12, 0x34, 0x56, 0x78];
+
+        let mut decoder = Decoder::new();
+
+        assert_eq!(
+            u32::decode(&mut decoder, &bytes).expect("wrong message"),
+            value
+        )
+    }
+}
