@@ -1,10 +1,12 @@
 use std::{
+    collections::HashMap,
     net::{IpAddr, Ipv4Addr, SocketAddr},
     sync::Arc,
 };
 
 use core_3c::{
     board::{Board, Triangle},
+    game::{self, Game},
     kit::Kit,
     vector::Vector,
 };
@@ -14,7 +16,7 @@ use sfml::{
     graphics::{Color, RcSprite, RenderTarget, RenderWindow, Transformable},
     window::{ContextSettings, Event, Style, VideoMode},
 };
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, mpsc};
 
 use crate::texture_pack::TexturePack;
 
@@ -33,54 +35,59 @@ async fn main() {
     let kit = Kit::from_files(String::from("core_3c/data/")).unwrap();
     let texture_pack = TexturePack::from_kit(&kit);
 
-    let board = Board::new(Vector { x: 11, y: 10 }, kit);
-    let board_mutex_connection = Arc::new(Mutex::new(board));
-    let board_mutex_drawing = board_mutex_connection.clone();
+    let game = Game {
+        board: Board::new(Vector { x: 11, y: 10 }, kit),
+        player_states: HashMap::new(),
+    };
+    let game_mutex = Arc::new(Mutex::new(game));
 
-    let mut connection = Connection::init(&SocketAddr::new(
+    let connection = Connection::init(&SocketAddr::new(
         IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
         23171,
     ))
     .unwrap();
 
-    tokio::spawn(async move {
-        loop {
-            match connection.reciever.recv().await {
-                Some(message) => {
-                    let mut board_lock = board_mutex_connection.lock().await;
-                    handler_message(message, &mut *board_lock);
-                }
-                None => break,
-            }
-        }
-    });
+    tokio::spawn(handle_message_loop(
+        game_mutex.clone(),
+        connection.reciever,
+        connection.sender.clone(),
+    ));
 
-    connection.sender.send(Message::Ok).await.unwrap();
+    connection.sender.clone().send(Message::Ok).await.unwrap();
 
     while window.is_open() {
         while let Some(event) = window.poll_event() {
-            if event == Event::Closed {
-                window.close();
-            }
+            handler_sfml_event(
+                event,
+                &mut window,
+                &mut *game_mutex.lock().await,
+                connection.sender.clone(),
+            );
         }
 
         window.clear(Color::rgb(255, 127, 127));
 
-        for i in 0..11 {
-            for j in 0..10 {
-                let board_lock = board_mutex_drawing.lock().await;
-                draw_triangle(
-                    &mut window,
-                    &*board_lock
-                        .triangle(Vector { x: i, y: j })
-                        .expect("out of bounds"),
-                    Vector { x: i, y: j },
-                    &texture_pack,
-                );
-            }
-        }
+        draw(&mut window, &*game_mutex.lock().await, &texture_pack);
+    }
+}
 
-        window.display();
+fn draw(window: &mut RenderWindow, game: &Game, texture_pack: &TexturePack) {
+    draw_board(window, &game.board, texture_pack);
+    window.display();
+}
+
+fn draw_board(window: &mut RenderWindow, board: &Board, texture_pack: &TexturePack) {
+    for i in 0..board.scale().x {
+        for j in 0..board.scale().y {
+            draw_triangle(
+                window,
+                board
+                    .triangle(Vector { x: i, y: j })
+                    .expect("out of bounds"),
+                Vector { x: i, y: j },
+                texture_pack,
+            );
+        }
     }
 }
 
@@ -112,11 +119,34 @@ fn draw_triangle(
     window.draw(&sprite);
 }
 
-fn handler_sfml_event(event: Event) {}
+fn handler_sfml_event(
+    event: Event,
+    window: &mut RenderWindow,
+    game: &mut Game,
+    sender: mpsc::Sender<Message>,
+) {
+    if event == Event::Closed {
+        window.close();
+    }
+}
 
-async fn handler_message_loop(board_mutex: Arc<Mutex<Board>>) {}
+async fn handle_message_loop(
+    game_mutex: Arc<Mutex<Game>>,
+    mut reciever: mpsc::Receiver<Message>,
+    sender: mpsc::Sender<Message>,
+) {
+    loop {
+        match reciever.recv().await {
+            Some(message) => {
+                let mut board_lock = game_mutex.lock().await;
+                handler_message(message, &mut *board_lock, sender.clone());
+            }
+            None => break,
+        }
+    }
+}
 
-fn handler_message(message: Message, board: &mut Board) {
+fn handler_message(message: Message, game: &mut Game, sender: mpsc::Sender<Message>) {
     match message {
         Message::Ok => todo!(),
         Message::Error(error_message) => todo!(),
@@ -126,7 +156,7 @@ fn handler_message(message: Message, board: &mut Board) {
         Message::Destroy(destroy_message) => todo!(),
         Message::Grab(grab_message) => todo!(),
         Message::SetTriangle(set_triangle_message) => {
-            board
+            game.board
                 .set_triangle(set_triangle_message.triangle, set_triangle_message.location)
                 .unwrap();
         }

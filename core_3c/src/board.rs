@@ -45,6 +45,11 @@ impl Board {
         }
     }
 
+    /// Returns a scale of the board
+    pub fn scale(&self) -> Vector {
+        self.scale
+    }
+
     /// Returns a reference on triangle with specified coordinates
     /// # Errors
     /// - if specified coordinates out of board's bounds returns [OutBounds](BoardError::OutOfBounds)
