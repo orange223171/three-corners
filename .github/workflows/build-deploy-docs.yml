@@ -37,8 +37,7 @@ jobs:
           cd ..
 
       - name: Install cmake
-        run: |
-          apt-get install make cmake
+        uses: jwlawson/actions-setup-cmake@v2
 
       - name: Build docs
         run: |
