@@ -20,7 +20,6 @@ const SET_TRIANGLE_MESSAGE: u32 = 64;
 
 /// A network message
 #[repr(u32)]
-#[derive(Debug)]
 pub enum Message {
     Ok = OK_MESSAGE,
     Error(ErrorMessage) = ERROR_MESSAGE,
@@ -101,6 +100,29 @@ impl Message {
                 String::from("Message"),
                 value.to_be_bytes().to_vec(),
             )),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn message_ok_encode() {
+        let message = Message::Ok;
+        let bytes: Vec<u8> = vec![0x00, 0x00, 0x00, 0x00];
+
+        assert_eq!(message.as_bytes(), bytes)
+    }
+
+    #[test]
+    fn message_ok_decode() {
+        let bytes: [u8; 4] = [0x00, 0x00, 0x00, 0x00];
+
+        match Message::from_bytes(&bytes).expect("wrong message") {
+            Message::Ok => assert!(true),
+            _ => assert!(false),
         }
     }
 }

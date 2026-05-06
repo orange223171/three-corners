@@ -36,6 +36,10 @@ jobs:
           mdbook build --dest-dir ../output
           cd ..
 
+      - name: Install cmake
+        run: |
+          apt-get install make cmake
+
       - name: Build docs
         run: |
           cargo doc --no-deps --workspace --document-private-items --target-dir output

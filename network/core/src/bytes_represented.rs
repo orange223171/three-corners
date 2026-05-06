@@ -22,10 +22,10 @@ impl Decoder {
 
     /// Returns slice with specified length from original slice, if specifies
     pub(crate) fn slice<'a>(&mut self, bytes: &'a [u8], len: usize) -> Option<&'a [u8]> {
-        if self.current_byte + len < bytes.len() {
+        if self.current_byte + len >= bytes.len() {
             None
         } else {
-            let slice = &bytes[self.current_byte..len];
+            let slice = &bytes[self.current_byte..self.current_byte + len];
             self.current_byte += len;
             Some(slice)
         }
@@ -369,7 +369,6 @@ impl Display for Error {
 
 impl std::error::Error for Error {}
 
-#[cfg(test)]
 #[cfg(test)]
 mod tests {
     use super::*;

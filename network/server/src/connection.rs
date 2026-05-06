@@ -8,10 +8,7 @@ use tokio::{
     sync::mpsc,
 };
 
-use std::{
-    collections::HashMap,
-    net::{SocketAddr, TcpListener as StdTcpListener},
-};
+use std::net::{SocketAddr, TcpListener as StdTcpListener};
 
 /// A message for updating connections list
 pub enum ConnectionMessage {
