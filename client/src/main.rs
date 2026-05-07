@@ -6,7 +6,7 @@ use std::{
 
 use core_3c::{
     board::{Board, Triangle},
-    game::{self, Game},
+    game::Game,
     kit::Kit,
     vector::Vector,
 };
@@ -125,8 +125,48 @@ fn handler_sfml_event(
     game: &mut Game,
     sender: mpsc::Sender<Message>,
 ) {
-    if event == Event::Closed {
-        window.close();
+    match event {
+        Event::Closed => window.close(),
+        Event::Resized { width, height } => (),
+        Event::LostFocus => (),
+        Event::GainedFocus => (),
+        Event::TextEntered { unicode } => (),
+        Event::KeyPressed {
+            code,
+            scan,
+            alt,
+            ctrl,
+            shift,
+            system,
+        } => (),
+        Event::KeyReleased {
+            code,
+            scan,
+            alt,
+            ctrl,
+            shift,
+            system,
+        } => (),
+        Event::MouseWheelScrolled { wheel, delta, x, y } => (),
+        Event::MouseButtonPressed { button, x, y } => (),
+        Event::MouseButtonReleased { button, x, y } => (),
+        Event::MouseMoved { x, y } => (),
+        Event::MouseEntered => (),
+        Event::MouseLeft => (),
+        Event::JoystickButtonPressed { joystickid, button } => (),
+        Event::JoystickButtonReleased { joystickid, button } => (),
+        Event::JoystickMoved {
+            joystickid,
+            axis,
+            position,
+        } => (),
+        Event::JoystickConnected { joystickid } => (),
+        Event::JoystickDisconnected { joystickid } => (),
+        Event::TouchBegan { finger, x, y } => (),
+        Event::TouchMoved { finger, x, y } => (),
+        Event::TouchEnded { finger, x, y } => (),
+        Event::SensorChanged { type_, x, y, z } => (),
+        _ => (),
     }
 }
 
@@ -138,25 +178,31 @@ async fn handle_message_loop(
     loop {
         match reciever.recv().await {
             Some(message) => {
-                let mut board_lock = game_mutex.lock().await;
-                handler_message(message, &mut *board_lock, sender.clone());
+                handler_message(message, game_mutex.clone(), sender.clone()).await;
             }
             None => break,
         }
     }
 }
 
-fn handler_message(message: Message, game: &mut Game, sender: mpsc::Sender<Message>) {
+async fn handler_message(
+    message: Message,
+    game_mutex: Arc<Mutex<Game>>,
+    sender: mpsc::Sender<Message>,
+) {
     match message {
-        Message::Ok => todo!(),
+        Message::Ok => (),
         Message::Error(error_message) => todo!(),
         Message::VersionRequest => todo!(),
-        Message::VersionResponce(version_responce_message) => todo!(),
-        Message::Build(build_message) => todo!(),
-        Message::Destroy(destroy_message) => todo!(),
-        Message::Grab(grab_message) => todo!(),
+        Message::VersionResponce(version_responce_message) => (),
+        Message::Build(build_message) => (),
+        Message::Destroy(destroy_message) => (),
+        Message::Grab(grab_message) => (),
         Message::SetTriangle(set_triangle_message) => {
-            game.board
+            game_mutex
+                .lock()
+                .await
+                .board
                 .set_triangle(set_triangle_message.triangle, set_triangle_message.location)
                 .unwrap();
         }
