@@ -98,7 +98,7 @@ impl Connection {
             .send(ConnectionMessage::Disconnect(socket))
             .await
         {
-            Ok(_) => todo!(),
+            Ok(_) => (),
             Err(_) => todo!(),
         }
     }
