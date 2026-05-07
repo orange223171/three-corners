@@ -13,6 +13,7 @@ use core_3c::{
 use network_client::connection::Connection;
 use network_core::message::Message;
 use sfml::{
+    cpp::FBox,
     graphics::{Color, RcSprite, RenderTarget, RenderWindow, Transformable},
     window::{ContextSettings, Event, Style, VideoMode},
 };
@@ -24,7 +25,35 @@ mod texture_pack;
 
 #[tokio::main]
 async fn main() {
-    let mut window = RenderWindow::new(
+    let (mut window, game_mutex, connection, texture_pack) = init();
+
+    tokio::spawn(handle_message_loop(
+        game_mutex.clone(),
+        connection.reciever,
+        connection.sender.clone(),
+    ));
+
+    while window.is_open() {
+        while let Some(event) = window.poll_event() {
+            handler_sfml_event(
+                event,
+                &mut window,
+                game_mutex.clone(),
+                connection.sender.clone(),
+            );
+        }
+
+        draw(&mut window, &*game_mutex.lock().await, &texture_pack);
+    }
+}
+
+fn init() -> (
+    FBox<RenderWindow>,
+    Arc<Mutex<Game>>,
+    Connection,
+    TexturePack,
+) {
+    let window = RenderWindow::new(
         VideoMode::new(800, 600, 32),
         "three corners",
         Style::CLOSE,
@@ -32,13 +61,16 @@ async fn main() {
     )
     .unwrap();
 
-    let kit = Kit::from_files(String::from("core_3c/data/")).unwrap();
-    let texture_pack = TexturePack::from_kit(&kit);
-
     let game = Game {
-        board: Board::new(Vector { x: 11, y: 10 }, kit),
+        board: Board::new(
+            Vector { x: 11, y: 10 },
+            Kit::from_files(String::from("core_3c/data/")).expect("Error to load game kit"),
+        ),
         player_states: HashMap::new(),
     };
+
+    let texture_pack = TexturePack::from_kit(game.board.kit());
+
     let game_mutex = Arc::new(Mutex::new(game));
 
     let connection = Connection::init(&SocketAddr::new(
@@ -47,32 +79,14 @@ async fn main() {
     ))
     .unwrap();
 
-    tokio::spawn(handle_message_loop(
-        game_mutex.clone(),
-        connection.reciever,
-        connection.sender.clone(),
-    ));
-
-    connection.sender.clone().send(Message::Ok).await.unwrap();
-
-    while window.is_open() {
-        while let Some(event) = window.poll_event() {
-            handler_sfml_event(
-                event,
-                &mut window,
-                &mut *game_mutex.lock().await,
-                connection.sender.clone(),
-            );
-        }
-
-        window.clear(Color::rgb(255, 127, 127));
-
-        draw(&mut window, &*game_mutex.lock().await, &texture_pack);
-    }
+    (window, game_mutex, connection, texture_pack)
 }
 
 fn draw(window: &mut RenderWindow, game: &Game, texture_pack: &TexturePack) {
+    window.clear(Color::rgb(255, 127, 127));
+
     draw_board(window, &game.board, texture_pack);
+
     window.display();
 }
 
@@ -122,7 +136,7 @@ fn draw_triangle(
 fn handler_sfml_event(
     event: Event,
     window: &mut RenderWindow,
-    game: &mut Game,
+    game: Arc<Mutex<Game>>,
     sender: mpsc::Sender<Message>,
 ) {
     match event {
