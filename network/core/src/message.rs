@@ -1,9 +1,9 @@
 //! Message definitions
 
 use crate::bytes_represented::{
-    BytesRepresented, Decoder, Error, build::BuildMessage, destroy::DestroyMessage,
-    error::ErrorMessage, grab::GrabMessage, set_triangle::SetTriangleMessage,
-    version_responce::VersionResponceMessage,
+    BytesRepresented, Decoder, Error, build_message::BuildMessage, destroy_message::DestroyMessage,
+    error_message::ErrorMessage, grab_message::GrabMessage,
+    set_triangle_message::SetTriangleMessage, version_responce_message::VersionResponceMessage,
 };
 
 const OK_MESSAGE: u32 = 0;
