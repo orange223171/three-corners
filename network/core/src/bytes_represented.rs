@@ -6,6 +6,7 @@ pub mod build_message;
 pub mod destroy_message;
 pub mod error_message;
 pub mod grab_message;
+pub mod log_in_message;
 pub mod set_triangle_message;
 pub mod version_responce_message;
 

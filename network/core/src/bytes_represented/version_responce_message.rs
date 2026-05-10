@@ -2,8 +2,8 @@
 
 use crate::bytes_represented::BytesRepresented;
 
-#[derive(Debug)]
 /// A responce with current version
+/// #[derive(Debug)]
 pub struct VersionResponceMessage {
     /// Major version
     pub major: u32,
