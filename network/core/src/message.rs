@@ -21,17 +21,16 @@ const GRAB_MESSAGE: u32 = 18;
 const SET_TRIANGLE_MESSAGE: u32 = 64;
 
 /// A network message
-#[repr(u32)]
 pub enum Message {
-    Ok = OK_MESSAGE,
-    Error(ErrorMessage) = ERROR_MESSAGE,
+    Ok,
+    Error(ErrorMessage),
 
-    VersionRequest = VERSION_REQUEST_MESSAGE,
-    VersionResponce(VersionResponceMessage) = VERSION_RESPONCE_MESSAGE,
+    VersionRequest,
+    VersionResponce(VersionResponceMessage),
 
-    Build(BuildMessage) = BUILD_MESSAGE,
-    Destroy(DestroyMessage) = DESTROY_MESSAGE,
-    Grab(GrabMessage) = GRAB_MESSAGE,
+    Build(BuildMessage),
+    Destroy(DestroyMessage),
+    Grab(GrabMessage),
 
     SetTriangle(SetTriangleMessage),
 }
