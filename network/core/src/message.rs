@@ -2,7 +2,7 @@
 
 use crate::bytes_represented::{
     BytesRepresented, Decoder, Error, build_message::BuildMessage, destroy_message::DestroyMessage,
-    error_message::ErrorMessage, grab_message::GrabMessage,
+    error_message::ErrorMessage, grab_message::GrabMessage, log_in_message::LogInMessage,
     set_triangle_message::SetTriangleMessage, version_responce_message::VersionResponceMessage,
 };
 
@@ -25,6 +25,8 @@ pub enum Message {
     Ok,
     Error(ErrorMessage),
 
+    LogIn(LogInMessage),
+
     VersionRequest,
     VersionResponce(VersionResponceMessage),
 
@@ -44,6 +46,11 @@ impl Message {
             Message::Error(error_message) => {
                 v.append(&mut ERROR_MESSAGE.encode());
                 v.append(&mut error_message.encode());
+            }
+
+            Message::LogIn(log_in_message) => {
+                v.append(&mut LOG_IN_MESSAGE.encode());
+                v.append(&mut log_in_message.encode());
             }
 
             Message::VersionRequest => v.append(&mut VERSION_REQUEST_MESSAGE.encode()),
@@ -84,6 +91,10 @@ impl Message {
             VERSION_RESPONCE_MESSAGE => Result::Ok(Message::VersionResponce(
                 VersionResponceMessage::decode(&mut decoder, bytes)?,
             )),
+
+            LOG_IN_MESSAGE => {
+                Result::Ok(Message::LogIn(LogInMessage::decode(&mut decoder, bytes)?))
+            }
 
             BUILD_MESSAGE => Result::Ok(Message::Build(BuildMessage::decode(&mut decoder, bytes)?)),
             DESTROY_MESSAGE => Result::Ok(Message::Destroy(DestroyMessage::decode(
