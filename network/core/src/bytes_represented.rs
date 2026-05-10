@@ -11,6 +11,7 @@ pub mod version_responce_message;
 
 /// A decoder counting current offset of data array
 pub(crate) struct Decoder {
+    /// Current decoding byte
     current_byte: usize,
 }
 
@@ -20,9 +21,9 @@ impl Decoder {
         Decoder { current_byte: 0 }
     }
 
-    /// Returns slice with specified length from original slice, if specifies
+    /// Returns slice with specified length from original slice if original slice contains this data else returns [None]
     pub(crate) fn slice<'a>(&mut self, bytes: &'a [u8], len: usize) -> Option<&'a [u8]> {
-        if self.current_byte + len >= bytes.len() {
+        if self.current_byte + len > bytes.len() {
             None
         } else {
             let slice = &bytes[self.current_byte..self.current_byte + len];
@@ -374,6 +375,176 @@ mod tests {
     use super::*;
 
     #[test]
+    fn decoder_slice() {
+        let bytes: [u8; 7] = [0, 1, 2, 3, 4, 5, 6];
+        let mut decoder = Decoder { current_byte: 2 };
+
+        match decoder.slice(&bytes, 3) {
+            Some(slice) => assert_eq!(slice, [2, 3, 4]),
+            None => panic!("Decoder didn't return slice"),
+        }
+    }
+
+    #[test]
+    fn decoder_begin_slice() {
+        let bytes: [u8; 5] = [0, 1, 2, 3, 4];
+        let mut decoder = Decoder::new();
+
+        match decoder.slice(&bytes, 2) {
+            Some(slice) => assert_eq!(slice, [0, 1]),
+            None => panic!("Decoder didn't return slice"),
+        }
+    }
+
+    #[test]
+    fn decoder_end_slice() {
+        let bytes: [u8; 5] = [0, 1, 2, 3, 4];
+        let mut decoder = Decoder { current_byte: 3 };
+
+        match decoder.slice(&bytes, 2) {
+            Some(slice) => assert_eq!(slice, [3, 4]),
+            None => panic!("Decoder didn't return slice"),
+        }
+    }
+
+    #[test]
+    fn decoder_full_slice() {
+        let bytes: [u8; 5] = [0, 1, 2, 3, 4];
+        let mut decoder = Decoder::new();
+
+        match decoder.slice(&bytes, 5) {
+            Some(slice) => assert_eq!(slice, [0, 1, 2, 3, 4]),
+            None => panic!("Decoder didn't return slice"),
+        }
+    }
+
+    #[test]
+    fn i8_encode() {
+        let value: i8 = 0x12;
+        let bytes: Vec<u8> = vec![0x12];
+
+        assert_eq!(value.encode(), bytes)
+    }
+
+    #[test]
+    fn i8_decode() {
+        let value: i8 = 0x12;
+        let bytes: [u8; 1] = [0x12];
+
+        let mut decoder = Decoder::new();
+
+        assert_eq!(
+            i8::decode(&mut decoder, &bytes).expect("Decoder didn't return slice"),
+            value
+        )
+    }
+
+    #[test]
+    fn i16_encode() {
+        let value: i16 = 0x1234;
+        let bytes: Vec<u8> = vec![0x12, 0x34];
+
+        assert_eq!(value.encode(), bytes)
+    }
+
+    #[test]
+    fn i16_decode() {
+        let value: i16 = 0x1234;
+        let bytes: [u8; 2] = [0x12, 0x34];
+
+        let mut decoder = Decoder::new();
+
+        assert_eq!(
+            i16::decode(&mut decoder, &bytes).expect("Decoder didn't return slice"),
+            value
+        )
+    }
+
+    #[test]
+    fn i32_encode() {
+        let value: i32 = 0x12345678;
+        let bytes: Vec<u8> = vec![0x12, 0x34, 0x56, 0x78];
+
+        assert_eq!(value.encode(), bytes)
+    }
+
+    #[test]
+    fn i32_decode() {
+        let value: i32 = 0x12345678;
+        let bytes: [u8; 4] = [0x12, 0x34, 0x56, 0x78];
+
+        let mut decoder = Decoder::new();
+
+        assert_eq!(
+            i32::decode(&mut decoder, &bytes).expect("Decoder didn't return slice"),
+            value
+        )
+    }
+
+    #[test]
+    fn i64_encode() {
+        let value: i64 = 0x1234567890ABCDEF;
+        let bytes: Vec<u8> = vec![0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef];
+
+        assert_eq!(value.encode(), bytes)
+    }
+
+    #[test]
+    fn i64_decode() {
+        let value: i64 = 0x1234567890ABCDEF;
+        let bytes: [u8; 8] = [0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef];
+
+        let mut decoder = Decoder::new();
+
+        assert_eq!(
+            i64::decode(&mut decoder, &bytes).expect("Decoder didn't return slice"),
+            value
+        )
+    }
+
+    #[test]
+    fn u8_encode() {
+        let value: u8 = 0x12;
+        let bytes: Vec<u8> = vec![0x12];
+
+        assert_eq!(value.encode(), bytes)
+    }
+
+    #[test]
+    fn u8_decode() {
+        let value: u8 = 0x12;
+        let bytes: [u8; 1] = [0x12];
+
+        let mut decoder = Decoder::new();
+
+        assert_eq!(
+            u8::decode(&mut decoder, &bytes).expect("Decoder didn't return slice"),
+            value
+        )
+    }
+
+    #[test]
+    fn u16_encode() {
+        let value: u16 = 0x1234;
+        let bytes: Vec<u8> = vec![0x12, 0x34];
+
+        assert_eq!(value.encode(), bytes)
+    }
+
+    #[test]
+    fn u16_decode() {
+        let value: u16 = 0x1234;
+        let bytes: [u8; 2] = [0x12, 0x34];
+
+        let mut decoder = Decoder::new();
+
+        assert_eq!(
+            u16::decode(&mut decoder, &bytes).expect("Decoder didn't return slice"),
+            value
+        )
+    }
+
+    #[test]
     fn u32_encode() {
         let value: u32 = 0x12345678;
         let bytes: Vec<u8> = vec![0x12, 0x34, 0x56, 0x78];
@@ -389,7 +560,185 @@ mod tests {
         let mut decoder = Decoder::new();
 
         assert_eq!(
-            u32::decode(&mut decoder, &bytes).expect("wrong message"),
+            u32::decode(&mut decoder, &bytes).expect("Decoder didn't return slice"),
+            value
+        )
+    }
+
+    #[test]
+    fn u64_encode() {
+        let value: u64 = 0x1234567890ABCDEF;
+        let bytes: Vec<u8> = vec![0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF];
+
+        assert_eq!(value.encode(), bytes)
+    }
+
+    #[test]
+    fn u64_decode() {
+        let value: u64 = 0x1234567890ABCDEF;
+        let bytes: [u8; 8] = [0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF];
+
+        let mut decoder = Decoder::new();
+
+        assert_eq!(
+            u64::decode(&mut decoder, &bytes).expect("Decoder didn't return slice"),
+            value
+        )
+    }
+
+    #[test]
+    fn usize_encode() {
+        let value: usize = 0x1234567890ABCDEF;
+        let bytes: Vec<u8> = vec![0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF];
+
+        assert_eq!(value.encode(), bytes)
+    }
+
+    #[test]
+    fn usize_decode() {
+        let value: usize = 0x1234567890ABCDEF;
+        let bytes: [u8; 8] = [0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF];
+
+        let mut decoder = Decoder::new();
+
+        assert_eq!(
+            usize::decode(&mut decoder, &bytes).expect("Decoder didn't return slice"),
+            value
+        )
+    }
+
+    #[test]
+    fn true_encode() {
+        let value: bool = true;
+        let bytes: [u8; 1] = [1];
+
+        assert_eq!(value.encode(), bytes);
+    }
+
+    #[test]
+    fn false_encode() {
+        let value: bool = false;
+        let bytes: [u8; 1] = [0];
+
+        assert_eq!(value.encode(), bytes);
+    }
+
+    #[test]
+    fn true_decode() {
+        let value: bool = true;
+        let bytes: [u8; 1] = [1];
+
+        let mut decoder = Decoder::new();
+
+        assert_eq!(
+            bool::decode(&mut decoder, &bytes).expect("Decoder didn't return slice"),
+            value
+        )
+    }
+
+    #[test]
+    fn false_decode() {
+        let value: bool = false;
+        let bytes: [u8; 1] = [0];
+
+        let mut decoder = Decoder::new();
+
+        assert_eq!(
+            bool::decode(&mut decoder, &bytes).expect("Decoder didn't return slice"),
+            value
+        )
+    }
+
+    #[test]
+    fn string_encode() {
+        let value: String = String::from("abcd");
+        let bytes: [u8; 12] = [
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x61, 0x62, 0x63, 0x64,
+        ];
+
+        assert_eq!(value.encode(), bytes);
+    }
+
+    #[test]
+    fn empty_string_encode() {
+        let value: String = String::from("");
+        let bytes: [u8; 8] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+
+        assert_eq!(value.encode(), bytes);
+    }
+
+    #[test]
+    fn string_decode() {
+        let value: String = String::from("abcd");
+        let bytes: [u8; 12] = [
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x61, 0x62, 0x63, 0x64,
+        ];
+
+        let mut decoder = Decoder::new();
+
+        assert_eq!(
+            String::decode(&mut decoder, &bytes).expect("Decoder didn't return slice"),
+            value
+        )
+    }
+
+    #[test]
+    fn empty_string_decode() {
+        let value: String = String::from("");
+        let bytes: [u8; 8] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+
+        let mut decoder = Decoder::new();
+
+        assert_eq!(
+            String::decode(&mut decoder, &bytes).expect("Decoder didn't return slice"),
+            value
+        )
+    }
+
+    #[test]
+    fn vec_encode() {
+        let value: Vec<u16> = vec![0x1234, 0x3456, 0x5678, 0x7890];
+        let bytes: [u8; 16] = [
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x12, 0x34, 0x34, 0x56, 0x56, 0x78,
+            0x78, 0x90,
+        ];
+
+        assert_eq!(value.encode(), bytes)
+    }
+
+    #[test]
+    fn empty_vec_encode() {
+        let value: Vec<u16> = Vec::new();
+        let bytes: [u8; 8] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+
+        assert_eq!(value.encode(), bytes)
+    }
+
+    #[test]
+    fn vec_decode() {
+        let value: Vec<u16> = vec![0x1234, 0x3456, 0x5678, 0x7890];
+        let bytes: [u8; 16] = [
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x12, 0x34, 0x34, 0x56, 0x56, 0x78,
+            0x78, 0x90,
+        ];
+
+        let mut decoder = Decoder::new();
+
+        assert_eq!(
+            Vec::<u16>::decode(&mut decoder, &bytes).expect("Decoder didn't return slice"),
+            value
+        )
+    }
+
+    #[test]
+    fn empty_vec_decode() {
+        let value: Vec<u16> = Vec::new();
+        let bytes: [u8; 8] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+
+        let mut decoder = Decoder::new();
+
+        assert_eq!(
+            Vec::<u16>::decode(&mut decoder, &bytes).expect("Decoder didn't return slice"),
             value
         )
     }
