@@ -11,7 +11,7 @@ use core_3c::{
     vector::Vector,
 };
 use network_client::connection::Connection;
-use network_core::message::Message;
+use network_core::{bytes_represented::log_in_message, message::Message};
 use sfml::{
     cpp::FBox,
     graphics::{Color, RcSprite, RenderTarget, RenderWindow, Transformable},
@@ -209,6 +209,7 @@ async fn handler_message(
         Message::Error(error_message) => todo!(),
         Message::VersionRequest => todo!(),
         Message::VersionResponce(version_responce_message) => (),
+        Message::LogIn(log_in_message) => (),
         Message::Build(build_message) => (),
         Message::Destroy(destroy_message) => (),
         Message::Grab(grab_message) => (),
