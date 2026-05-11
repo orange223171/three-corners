@@ -11,11 +11,16 @@ use core_3c::{
     vector::Vector,
 };
 use network_client::connection::Connection;
-use network_core::{bytes_represented::log_in_message, message::Message};
+use network_core::{
+    bytes_represented::{
+        build_message::BuildMessage, destroy_message::DestroyMessage, log_in_message,
+    },
+    message::Message,
+};
 use sfml::{
     cpp::FBox,
     graphics::{Color, RcSprite, RenderTarget, RenderWindow, Transformable},
-    window::{ContextSettings, Event, Style, VideoMode},
+    window::{ContextSettings, Event, Style, VideoMode, mouse::Button},
 };
 use tokio::sync::{Mutex, mpsc};
 
@@ -40,7 +45,8 @@ async fn main() {
                 &mut window,
                 game_mutex.clone(),
                 connection.sender.clone(),
-            );
+            )
+            .await;
         }
 
         draw(&mut window, &*game_mutex.lock().await, &texture_pack);
@@ -133,7 +139,7 @@ fn draw_triangle(
     window.draw(&sprite);
 }
 
-fn handler_sfml_event(
+async fn handler_sfml_event(
     event: Event,
     window: &mut RenderWindow,
     game: Arc<Mutex<Game>>,
@@ -162,7 +168,40 @@ fn handler_sfml_event(
             system,
         } => (),
         Event::MouseWheelScrolled { wheel, delta, x, y } => (),
-        Event::MouseButtonPressed { button, x, y } => (),
+        Event::MouseButtonPressed { button, x, y } => {
+            if (x < 100) || (y < 84) || (x > 276) || (y > 394) {
+                ()
+            } else {
+                let x = x - 100;
+                let y = y - 84;
+
+                let x = if x % 16 <= 7 {
+                    (x / 16) as u32
+                } else {
+                    (x / 16 + 1) as u32
+                };
+                let y = (y / 31) as u32;
+
+                let location = Vector { x, y };
+
+                if button == Button::Left {
+                    sender
+                        .send(Message::Build(BuildMessage {
+                            location: location,
+                            build_name: String::from("field"),
+                        }))
+                        .await
+                        .unwrap()
+                }
+
+                if button == Button::Right {
+                    sender
+                        .send(Message::Destroy(DestroyMessage { location: location }))
+                        .await
+                        .unwrap()
+                }
+            }
+        }
         Event::MouseButtonReleased { button, x, y } => (),
         Event::MouseMoved { x, y } => (),
         Event::MouseEntered => (),
@@ -209,10 +248,10 @@ async fn handler_message(
         Message::Error(error_message) => todo!(),
         Message::VersionRequest => todo!(),
         Message::VersionResponce(version_responce_message) => (),
-        Message::LogIn(log_in_message) => (),
-        Message::Build(build_message) => (),
-        Message::Destroy(destroy_message) => (),
-        Message::Grab(grab_message) => (),
+        Message::LogIn(_) => (),
+        Message::Build(_) => (),
+        Message::Destroy(_) => (),
+        Message::Grab(_) => (),
         Message::SetTriangle(set_triangle_message) => {
             game_mutex
                 .lock()
