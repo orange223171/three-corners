@@ -3,7 +3,8 @@
 use crate::bytes_represented::{
     BytesRepresented, Decoder, Error, build_message::BuildMessage, destroy_message::DestroyMessage,
     error_message::ErrorMessage, grab_message::GrabMessage, log_in_message::LogInMessage,
-    set_triangle_message::SetTriangleMessage, version_responce_message::VersionResponceMessage,
+    player_state_message::PlayerStateMessage, set_triangle_message::SetTriangleMessage,
+    version_responce_message::VersionResponceMessage,
 };
 
 const OK_MESSAGE: u32 = 0;
@@ -19,6 +20,7 @@ const DESTROY_MESSAGE: u32 = 17;
 const GRAB_MESSAGE: u32 = 18;
 
 const SET_TRIANGLE_MESSAGE: u32 = 64;
+const PLAYER_STATE_MESSAGE: u32 = 65;
 
 /// A network message
 pub enum Message {
@@ -35,6 +37,7 @@ pub enum Message {
     Grab(GrabMessage),
 
     SetTriangle(SetTriangleMessage),
+    PlayerState(PlayerStateMessage),
 }
 
 impl Message {
@@ -74,6 +77,10 @@ impl Message {
                 v.append(&mut SET_TRIANGLE_MESSAGE.encode());
                 v.append(&mut set_triangle_message.encode());
             }
+            Message::PlayerState(player_state_message) => {
+                v.append(&mut PLAYER_STATE_MESSAGE.encode());
+                v.append(&mut player_state_message.encode());
+            }
         }
 
         v
@@ -104,6 +111,10 @@ impl Message {
             GRAB_MESSAGE => Result::Ok(Message::Grab(GrabMessage::decode(&mut decoder, bytes)?)),
 
             SET_TRIANGLE_MESSAGE => Result::Ok(Message::SetTriangle(SetTriangleMessage::decode(
+                &mut decoder,
+                bytes,
+            )?)),
+            PLAYER_STATE_MESSAGE => Result::Ok(Message::PlayerState(PlayerStateMessage::decode(
                 &mut decoder,
                 bytes,
             )?)),

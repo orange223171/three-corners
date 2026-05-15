@@ -1,12 +1,13 @@
 use std::fmt::Display;
 
-use core_3c::{building::Building, vector::Vector};
+use core_3c::{building::Building, player_state::PlayerState, vector::Vector};
 
 pub mod build_message;
 pub mod destroy_message;
 pub mod error_message;
 pub mod grab_message;
 pub mod log_in_message;
+pub mod player_state_message;
 pub mod set_triangle_message;
 pub mod version_responce_message;
 
@@ -345,6 +346,29 @@ impl BytesRepresented for Building {
             player: String::decode(decoder, bytes)?,
             build_in_current_round: bool::decode(decoder, bytes)?,
             synergies: Vec::decode(decoder, bytes)?,
+        })
+    }
+}
+
+impl BytesRepresented for PlayerState {
+    fn encode(self) -> Vec<u8> {
+        let mut v: Vec<u8> = Vec::new();
+
+        v.append(&mut self.economic.encode());
+        v.append(&mut self.politic.encode());
+        v.append(&mut self.authority.encode());
+
+        v
+    }
+
+    fn decode(decoder: &mut Decoder, bytes: &[u8]) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        Result::Ok(Self {
+            economic: u32::decode(decoder, bytes)?,
+            politic: u32::decode(decoder, bytes)?,
+            authority: u32::decode(decoder, bytes)?,
         })
     }
 }

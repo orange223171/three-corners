@@ -6,7 +6,7 @@ use std::{
 
 use core_3c::{
     board::{Board, Triangle},
-    game::Game,
+    game::{self, Game},
     kit::Kit,
     vector::Vector,
 };
@@ -259,6 +259,13 @@ async fn handler_message(
                 .board
                 .set_triangle(set_triangle_message.triangle, set_triangle_message.location)
                 .unwrap();
+        }
+        Message::PlayerState(player_state_message) => {
+            game_mutex
+                .lock()
+                .await
+                .player_states
+                .insert(player_state_message.player, player_state_message.state);
         }
     }
 }
