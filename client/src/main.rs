@@ -26,6 +26,9 @@ use tokio::sync::{Mutex, mpsc};
 
 use crate::texture_pack::TexturePack;
 
+mod actions_menu;
+mod board;
+mod players_states_box;
 mod texture_pack;
 
 #[tokio::main]
