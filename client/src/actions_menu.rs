@@ -1,11 +1,18 @@
 //! Actions menu definitions
 
-use core_3c::info::building;
+use core_3c::{info::building, vector::Vector};
+use network_core::{
+    bytes_represented::{
+        build_message::BuildMessage, destroy_message::DestroyMessage, grab_message::GrabMessage,
+    },
+    message::Message,
+};
 use sfml::{
     cpp::FBox,
     graphics::{Drawable, Font, RcText, RenderStates, Text, Transform, Vertex},
     system::{SfStr, Vector2},
 };
+use tokio::sync::mpsc::Sender;
 
 /// Action size in pixels
 const ACTION_SIZE: u32 = 32;
@@ -46,6 +53,8 @@ impl Drawable for Action {
 pub struct ActionsMenu {
     /// Actions
     actions: Vec<Action>,
+    /// triangle location
+    location: Option<Vector>,
 }
 
 impl ActionsMenu {
@@ -53,7 +62,12 @@ impl ActionsMenu {
     pub fn new() -> Self {
         Self {
             actions: Vec::new(),
+            location: None,
         }
+    }
+
+    pub fn set_location(&mut self, location: Vector) {
+        self.location = Some(location);
     }
 
     /// Clears actions menu
@@ -64,6 +78,31 @@ impl ActionsMenu {
     /// Add action to the actions menu
     pub fn add(&mut self, action: Action) {
         self.actions.push(action);
+    }
+
+    /// Handles button pressing
+    pub async fn handle_button_pressing(&self, x: i32, y: i32, sender: Sender<Message>) {
+        let location = if let Some(location) = self.location {
+            location
+        } else {
+            return;
+        };
+
+        let action_n = y / ACTION_SIZE as i32;
+        match self.actions.get(action_n as usize) {
+            Some(action) => sender
+                .send(match action {
+                    Action::Build(build_name, _) => Message::Build(BuildMessage {
+                        location: location,
+                        build_name: build_name.clone(),
+                    }),
+                    Action::Grab(_) => Message::Grab(GrabMessage { location }),
+                    Action::Destroy(_) => Message::Destroy(DestroyMessage { location }),
+                })
+                .await
+                .unwrap(),
+            None => (),
+        }
     }
 }
 

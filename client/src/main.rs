@@ -6,7 +6,7 @@ use std::{
 
 use core_3c::{
     board::{Board, Triangle},
-    game::{self, Game},
+    game::Game,
     kit::Kit,
     vector::Vector,
 };
