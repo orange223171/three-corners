@@ -24,7 +24,10 @@ use sfml::{
 };
 use tokio::sync::{Mutex, mpsc};
 
-use crate::texture_pack::TexturePack;
+use crate::{
+    actions_menu::{Action, ActionsMenu},
+    texture_pack::TexturePack,
+};
 
 mod actions_menu;
 mod board;
@@ -33,7 +36,10 @@ mod texture_pack;
 
 #[tokio::main]
 async fn main() {
-    let (mut window, game_mutex, connection, texture_pack) = init();
+    let (mut window, game_mutex, connection, texture_pack, mut actions_menu) = init();
+
+    actions_menu.set_location(Vector { x: 5, y: 5 });
+    actions_menu.add(Action::Build(String::from("field"), 4));
 
     tokio::spawn(handle_message_loop(
         game_mutex.clone(),
@@ -47,12 +53,18 @@ async fn main() {
                 event,
                 &mut window,
                 game_mutex.clone(),
+                &actions_menu,
                 connection.sender.clone(),
             )
             .await;
         }
 
-        draw(&mut window, &*game_mutex.lock().await, &texture_pack);
+        draw(
+            &mut window,
+            &*game_mutex.lock().await,
+            &actions_menu,
+            &texture_pack,
+        );
     }
 }
 
@@ -61,6 +73,7 @@ fn init() -> (
     Arc<Mutex<Game>>,
     Connection,
     TexturePack,
+    ActionsMenu,
 ) {
     let window = RenderWindow::new(
         VideoMode::new(800, 600, 32),
@@ -88,13 +101,21 @@ fn init() -> (
     ))
     .unwrap();
 
-    (window, game_mutex, connection, texture_pack)
+    let actions_menu = ActionsMenu::new();
+
+    (window, game_mutex, connection, texture_pack, actions_menu)
 }
 
-fn draw(window: &mut RenderWindow, game: &Game, texture_pack: &TexturePack) {
+fn draw(
+    window: &mut RenderWindow,
+    game: &Game,
+    actions_menu: &ActionsMenu,
+    texture_pack: &TexturePack,
+) {
     window.clear(Color::rgb(255, 127, 127));
 
     draw_board(window, &game.board, texture_pack);
+    window.draw(actions_menu);
 
     window.display();
 }
@@ -146,6 +167,7 @@ async fn handler_sfml_event(
     event: Event,
     window: &mut RenderWindow,
     game: Arc<Mutex<Game>>,
+    actions_menu: &ActionsMenu,
     sender: mpsc::Sender<Message>,
 ) {
     match event {
@@ -172,6 +194,11 @@ async fn handler_sfml_event(
         } => (),
         Event::MouseWheelScrolled { wheel, delta, x, y } => (),
         Event::MouseButtonPressed { button, x, y } => {
+            if x > (3 * window.size().x / 4) as i32 {
+                actions_menu
+                    .handle_button_pressing(x, y, sender.clone())
+                    .await;
+            }
             if (x < 100) || (y < 84) || (x > 276) || (y > 394) {
                 ()
             } else {
