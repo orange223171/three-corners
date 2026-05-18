@@ -31,7 +31,6 @@ use crate::{
 
 mod actions_menu;
 mod board_box;
-mod game;
 mod players_states_box;
 mod texture_pack;
 
