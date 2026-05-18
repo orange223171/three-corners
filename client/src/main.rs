@@ -6,8 +6,8 @@ use std::{
 
 use core_3c::{
     board::{Board, Triangle},
-    game::Game,
     kit::Kit,
+    player_state::PlayerState,
     vector::Vector,
 };
 use network_client::connection::Connection;
@@ -17,30 +17,36 @@ use network_core::{
 };
 use sfml::{
     cpp::FBox,
-    graphics::{Color, RcSprite, RenderTarget, RenderWindow, Transformable},
+    graphics::{Color, RcSprite, RenderStates, RenderTarget, RenderWindow, Transformable},
     window::{ContextSettings, Event, Style, VideoMode, mouse::Button},
 };
 use tokio::sync::{Mutex, mpsc};
 
 use crate::{
     actions_menu::{Action, ActionsMenu},
+    board_box::BoardBox,
     texture_pack::TexturePack,
 };
 
 mod actions_menu;
 mod board_box;
+mod game;
 mod players_states_box;
 mod texture_pack;
 
 #[tokio::main]
 async fn main() {
-    let (mut window, game_mutex, connection, texture_pack, mut actions_menu) = init();
+    let (mut window, board_mutex, players_states_mutex, connection, texture_pack, mut actions_menu) =
+        init();
+
+    let board_box = BoardBox::new(board_mutex.clone(), texture_pack);
 
     actions_menu.set_location(Vector { x: 5, y: 5 });
     actions_menu.add(Action::Build(String::from("field"), 4));
 
     tokio::spawn(handle_message_loop(
-        game_mutex.clone(),
+        board_mutex.clone(),
+        players_states_mutex.clone(),
         connection.reciever,
         connection.sender.clone(),
     ));
@@ -50,25 +56,22 @@ async fn main() {
             handler_sfml_event(
                 event,
                 &mut window,
-                game_mutex.clone(),
+                board_mutex.clone(),
+                players_states_mutex.clone(),
                 &actions_menu,
                 connection.sender.clone(),
             )
             .await;
         }
 
-        draw(
-            &mut window,
-            &*game_mutex.lock().await,
-            &actions_menu,
-            &texture_pack,
-        );
+        draw(&mut window, &board_box, &actions_menu);
     }
 }
 
 fn init() -> (
     FBox<RenderWindow>,
-    Arc<Mutex<Game>>,
+    Arc<Mutex<Board>>,
+    Arc<Mutex<HashMap<String, PlayerState>>>,
     Connection,
     TexturePack,
     ActionsMenu,
@@ -81,17 +84,12 @@ fn init() -> (
     )
     .unwrap();
 
-    let game = Game {
-        board: Board::new(
-            Vector { x: 11, y: 10 },
-            Kit::from_files(String::from("core_3c/data/")).expect("Error to load game kit"),
-        ),
-        player_states: HashMap::new(),
-    };
+    let kit = Kit::from_files(String::from("core_3c/data/")).expect("Error to load game kit");
 
-    let texture_pack = TexturePack::from_kit(game.board.kit());
+    let texture_pack = TexturePack::from_kit(&kit);
 
-    let game_mutex = Arc::new(Mutex::new(game));
+    let board = Arc::new(Mutex::new(Board::new(Vector { x: 11, y: 10 }, kit)));
+    let players_states = Arc::new(Mutex::new(HashMap::new()));
 
     let connection = Connection::init(&SocketAddr::new(
         IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
@@ -101,70 +99,32 @@ fn init() -> (
 
     let actions_menu = ActionsMenu::new();
 
-    (window, game_mutex, connection, texture_pack, actions_menu)
+    (
+        window,
+        board,
+        players_states,
+        connection,
+        texture_pack,
+        actions_menu,
+    )
 }
 
-fn draw(
-    window: &mut RenderWindow,
-    game: &Game,
-    actions_menu: &ActionsMenu,
-    texture_pack: &TexturePack,
-) {
+fn draw(window: &mut RenderWindow, board_box: &BoardBox, actions_menu: &ActionsMenu) {
     window.clear(Color::rgb(255, 127, 127));
 
-    draw_board(window, &game.board, texture_pack);
+    let mut board_render_states = RenderStates::DEFAULT;
+    board_render_states.transform.translate(100.0, 100.0);
+    window.draw_with_renderstates(board_box, &board_render_states);
     window.draw(actions_menu);
 
     window.display();
 }
 
-fn draw_board(window: &mut RenderWindow, board: &Board, texture_pack: &TexturePack) {
-    for i in 0..board.scale().x {
-        for j in 0..board.scale().y {
-            draw_triangle(
-                window,
-                board
-                    .triangle(Vector { x: i, y: j })
-                    .expect("out of bounds"),
-                Vector { x: i, y: j },
-                texture_pack,
-            );
-        }
-    }
-}
-
-fn draw_triangle(
-    window: &mut RenderWindow,
-    triangle: &Triangle,
-    position: Vector,
-    texture_pack: &TexturePack,
-) {
-    let mut sprite =
-        RcSprite::with_texture(texture_pack.texture(triangle).expect("Not found texture"));
-
-    sprite.set_position((
-        100.0 + (position.x * 16) as f32,
-        100.0 + (position.y * 31) as f32,
-    ));
-
-    sprite.set_origin((16.0, 16.0));
-    if position.x % 2 == 0 {
-        if position.y % 2 == 1 {
-            sprite.set_rotation(180.0);
-        }
-    } else {
-        if position.y % 2 == 0 {
-            sprite.set_rotation(180.0);
-        }
-    }
-
-    window.draw(&sprite);
-}
-
 async fn handler_sfml_event(
     event: Event,
     window: &mut RenderWindow,
-    game: Arc<Mutex<Game>>,
+    board_mutex: Arc<Mutex<Board>>,
+    players_states: Arc<Mutex<HashMap<String, PlayerState>>>,
     actions_menu: &ActionsMenu,
     sender: mpsc::Sender<Message>,
 ) {
@@ -252,14 +212,21 @@ async fn handler_sfml_event(
 }
 
 async fn handle_message_loop(
-    game_mutex: Arc<Mutex<Game>>,
+    board_mutex: Arc<Mutex<Board>>,
+    players_states_mutex: Arc<Mutex<HashMap<String, PlayerState>>>,
     mut reciever: mpsc::Receiver<Message>,
     sender: mpsc::Sender<Message>,
 ) {
     loop {
         match reciever.recv().await {
             Some(message) => {
-                handler_message(message, game_mutex.clone(), sender.clone()).await;
+                handler_message(
+                    message,
+                    board_mutex.clone(),
+                    players_states_mutex.clone(),
+                    sender.clone(),
+                )
+                .await;
             }
             None => break,
         }
@@ -268,7 +235,8 @@ async fn handle_message_loop(
 
 async fn handler_message(
     message: Message,
-    game_mutex: Arc<Mutex<Game>>,
+    board_mutex: Arc<Mutex<Board>>,
+    players_states_mutex: Arc<Mutex<HashMap<String, PlayerState>>>,
     sender: mpsc::Sender<Message>,
 ) {
     match message {
@@ -281,18 +249,16 @@ async fn handler_message(
         Message::Destroy(_) => (),
         Message::Grab(_) => (),
         Message::SetTriangle(set_triangle_message) => {
-            game_mutex
+            board_mutex
                 .lock()
                 .await
-                .board
                 .set_triangle(set_triangle_message.triangle, set_triangle_message.location)
                 .unwrap();
         }
         Message::PlayerState(player_state_message) => {
-            game_mutex
+            players_states_mutex
                 .lock()
                 .await
-                .player_states
                 .insert(player_state_message.player, player_state_message.state);
         }
     }
