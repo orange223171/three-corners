@@ -37,11 +37,11 @@ mod texture_pack;
 
 #[tokio::main]
 async fn main() {
-    let (mut window, board_mutex, players_states_mutex, connection, texture_pack, mut actions_menu) =
-        init();
+    let (mut window, board_mutex, players_states_mutex, connection, texture_pack) = init();
 
     let players_states_box = PlayersStatesBox::new(players_states_mutex.clone());
     let board_box = BoardBox::new(board_mutex.clone(), texture_pack);
+    let mut actions_menu = ActionsMenu::new();
 
     actions_menu.set_location(Vector { x: 5, y: 5 });
     actions_menu.add(Action::Build(String::from("field"), 4));
@@ -76,7 +76,6 @@ fn init() -> (
     Arc<Mutex<HashMap<String, PlayerState>>>,
     Connection,
     TexturePack,
-    ActionsMenu,
 ) {
     let window = RenderWindow::new(
         VideoMode::new(800, 600, 32),
@@ -99,16 +98,7 @@ fn init() -> (
     ))
     .unwrap();
 
-    let actions_menu = ActionsMenu::new();
-
-    (
-        window,
-        board,
-        players_states,
-        connection,
-        texture_pack,
-        actions_menu,
-    )
+    (window, board, players_states, connection, texture_pack)
 }
 
 fn draw(
