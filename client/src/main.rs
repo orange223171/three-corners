@@ -12,9 +12,7 @@ use core_3c::{
 };
 use network_client::connection::Connection;
 use network_core::{
-    bytes_represented::{
-        build_message::BuildMessage, destroy_message::DestroyMessage, log_in_message,
-    },
+    bytes_represented::{build_message::BuildMessage, destroy_message::DestroyMessage},
     message::Message,
 };
 use sfml::{
@@ -30,7 +28,7 @@ use crate::{
 };
 
 mod actions_menu;
-mod board;
+mod board_box;
 mod players_states_box;
 mod texture_pack;
 
