@@ -1,6 +1,7 @@
 //! Player state definitions
 
 /// A player state
+#[derive(Debug, Clone)]
 pub struct PlayerState {
     /// A number of economic resource
     pub economic: u32,

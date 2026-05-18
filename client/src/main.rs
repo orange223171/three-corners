@@ -12,7 +12,9 @@ use core_3c::{
 };
 use network_client::connection::Connection;
 use network_core::{
-    bytes_represented::{build_message::BuildMessage, destroy_message::DestroyMessage},
+    bytes_represented::{
+        build_message::BuildMessage, destroy_message::DestroyMessage, log_in_message::LogInMessage,
+    },
     message::Message,
 };
 use sfml::{
@@ -51,6 +53,14 @@ async fn main() {
         connection.reciever,
         connection.sender.clone(),
     ));
+
+    connection
+        .sender
+        .send(Message::LogIn(LogInMessage {
+            player: String::from("orange"),
+        }))
+        .await
+        .unwrap();
 
     while window.is_open() {
         while let Some(event) = window.poll_event() {
