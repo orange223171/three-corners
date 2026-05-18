@@ -59,7 +59,7 @@ async fn main() {
                 &mut window,
                 board_mutex.clone(),
                 players_states_mutex.clone(),
-                &actions_menu,
+                &mut actions_menu,
                 connection.sender.clone(),
             )
             .await;
@@ -129,7 +129,7 @@ async fn handler_sfml_event(
     window: &mut RenderWindow,
     board_mutex: Arc<Mutex<Board>>,
     players_states: Arc<Mutex<HashMap<String, PlayerState>>>,
-    actions_menu: &ActionsMenu,
+    actions_menu: &mut ActionsMenu,
     sender: mpsc::Sender<Message>,
 ) {
     match event {
@@ -177,20 +177,38 @@ async fn handler_sfml_event(
                 let location = Vector { x, y };
 
                 if button == Button::Left {
-                    sender
-                        .send(Message::Build(BuildMessage {
-                            location: location,
-                            build_name: String::from("field"),
-                        }))
-                        .await
-                        .unwrap()
-                }
+                    actions_menu.clear();
+                    actions_menu.set_location(location);
 
-                if button == Button::Right {
-                    sender
-                        .send(Message::Destroy(DestroyMessage { location: location }))
-                        .await
-                        .unwrap()
+                    let board = board_mutex.lock().await;
+                    if let Ok(triangle) = board.triangle(location) {
+                        match triangle {
+                            Some(building) => {
+                                actions_menu.add(Action::Destroy(
+                                    board
+                                        .kit()
+                                        .building_kit()
+                                        .get(&building.name)
+                                        .expect("fail to found building in kit")
+                                        .base_destroy_price,
+                                ));
+                                actions_menu.add(Action::Grab(
+                                    board
+                                        .kit()
+                                        .building_kit()
+                                        .get(&building.name)
+                                        .expect("fail to found building in kit")
+                                        .base_grab_price,
+                                ))
+                            }
+                            None => board.kit().building_kit().iter().for_each(|building| {
+                                actions_menu.add(Action::Build(
+                                    building.0.clone(),
+                                    building.1.base_build_price,
+                                ))
+                            }),
+                        }
+                    }
                 }
             }
         }

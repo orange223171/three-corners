@@ -102,7 +102,7 @@ async fn message_handler(
                     .unwrap()
             }
         }
-        Message::Grab(grab_message) => todo!(),
+        Message::Grab(grab_message) => (),
         Message::SetTriangle(_) => connections_list
             .get(socket)
             .unwrap()
