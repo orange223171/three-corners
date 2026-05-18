@@ -88,7 +88,7 @@ impl ActionsMenu {
             return;
         };
 
-        let action_n = y / ACTION_SIZE as i32;
+        let action_n = (y - 16) / ACTION_SIZE as i32;
         match self.actions.get(action_n as usize) {
             Some(action) => sender
                 .send(match action {
