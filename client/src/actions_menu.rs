@@ -112,14 +112,10 @@ impl Drawable for ActionsMenu {
         target: &mut dyn sfml::graphics::RenderTarget,
         states: &sfml::graphics::RenderStates<'texture, 'shader, 'shader_texture>,
     ) {
-        let size = target.size();
+        let mut render_states = states.clone();
 
         self.actions.iter().for_each(|action| {
-            let mut render_states = states.clone();
-            render_states.transform = Transform::new(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
-            render_states
-                .transform
-                .translate((3 * size.x / 4) as f32, ACTION_SIZE as f32);
+            render_states.transform.translate(0.0, ACTION_SIZE as f32);
             target.draw_with_renderstates(action, &render_states);
         });
     }

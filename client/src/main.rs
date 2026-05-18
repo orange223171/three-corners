@@ -25,6 +25,7 @@ use tokio::sync::{Mutex, mpsc};
 use crate::{
     actions_menu::{Action, ActionsMenu},
     board_box::BoardBox,
+    players_states_box::PlayersStatesBox,
     texture_pack::TexturePack,
 };
 
@@ -39,6 +40,7 @@ async fn main() {
     let (mut window, board_mutex, players_states_mutex, connection, texture_pack, mut actions_menu) =
         init();
 
+    let players_states_box = PlayersStatesBox::new(players_states_mutex.clone());
     let board_box = BoardBox::new(board_mutex.clone(), texture_pack);
 
     actions_menu.set_location(Vector { x: 5, y: 5 });
@@ -64,7 +66,7 @@ async fn main() {
             .await;
         }
 
-        draw(&mut window, &board_box, &actions_menu);
+        draw(&mut window, &players_states_box, &board_box, &actions_menu);
     }
 }
 
@@ -109,13 +111,26 @@ fn init() -> (
     )
 }
 
-fn draw(window: &mut RenderWindow, board_box: &BoardBox, actions_menu: &ActionsMenu) {
+fn draw(
+    window: &mut RenderWindow,
+    players_states_box: &PlayersStatesBox,
+    board_box: &BoardBox,
+    actions_menu: &ActionsMenu,
+) {
     window.clear(Color::rgb(255, 127, 127));
 
-    let mut board_render_states = RenderStates::DEFAULT;
-    board_render_states.transform.translate(100.0, 100.0);
-    window.draw_with_renderstates(board_box, &board_render_states);
-    window.draw(actions_menu);
+    let players_states_box_render_states = RenderStates::DEFAULT;
+    window.draw_with_renderstates(players_states_box, &players_states_box_render_states);
+
+    let mut board_box_render_states = RenderStates::DEFAULT;
+    board_box_render_states.transform.translate(100.0, 100.0);
+    window.draw_with_renderstates(board_box, &board_box_render_states);
+
+    let mut actions_menu_render_states = RenderStates::DEFAULT;
+    actions_menu_render_states
+        .transform
+        .translate((3 * window.size().x / 4) as f32, 0.0);
+    window.draw_with_renderstates(actions_menu, &actions_menu_render_states);
 
     window.display();
 }

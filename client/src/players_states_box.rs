@@ -2,16 +2,17 @@
 
 use std::{collections::HashMap, sync::Arc};
 
-use core_3c::player_state::PlayerState;
+use core_3c::player_state::{self, PlayerState};
 use sfml::graphics::{Drawable, Font, Text};
+use tokio::sync::Mutex;
 
 /// A players' states box
 pub struct PlayersStatesBox {
-    players_states: HashMap<String, PlayerState>,
+    players_states: Arc<Mutex<HashMap<String, PlayerState>>>,
 }
 
 impl PlayersStatesBox {
-    fn new(players_states: HashMap<String, PlayerState>) -> Self {
+    pub fn new(players_states: Arc<Mutex<HashMap<String, PlayerState>>>) -> Self {
         Self {
             players_states: players_states,
         }
@@ -27,8 +28,14 @@ impl Drawable for PlayersStatesBox {
         let font =
             Font::from_file("/usr/share/fonts/TTF/DejaVuSans.ttf").expect("Error to load font");
 
+        let players_states = loop {
+            if let Ok(board) = self.players_states.try_lock() {
+                break board;
+            }
+        };
+
         let mut render_states = states.clone();
-        self.players_states.iter().for_each(|player_state| {
+        players_states.iter().for_each(|player_state| {
             let player_state_text = player_state.0.clone()
                 + " "
                 + player_state.1.economic.to_string().as_str()
