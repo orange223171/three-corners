@@ -8,8 +8,7 @@ use core_3c::{
     vector::Vector,
 };
 use network_core::bytes_represented::{
-    log_in_message, player_state_message::PlayerStateMessage,
-    set_triangle_message::SetTriangleMessage,
+    player_state_message::PlayerStateMessage, set_triangle_message::SetTriangleMessage,
 };
 use network_core::message::Message;
 use network_server::connection::{Connection, ConnectionMessage};

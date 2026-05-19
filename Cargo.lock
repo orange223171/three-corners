@@ -295,6 +295,7 @@ name = "server"
 version = "0.1.0"
 dependencies = [
  "core_3c",
+ "logic_3c",
  "network_core",
  "network_server",
  "tokio",
