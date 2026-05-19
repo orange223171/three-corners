@@ -2,7 +2,7 @@
 
 use std::{collections::HashMap, sync::Arc};
 
-use core_3c::player_state::{self, PlayerState};
+use core_3c::player_state::PlayerState;
 use sfml::graphics::{Drawable, Font, Text};
 use tokio::sync::Mutex;
 

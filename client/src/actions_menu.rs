@@ -1,17 +1,13 @@
 //! Actions menu definitions
 
-use core_3c::{info::building, vector::Vector};
+use core_3c::vector::Vector;
 use network_core::{
     bytes_represented::{
         build_message::BuildMessage, destroy_message::DestroyMessage, grab_message::GrabMessage,
     },
     message::Message,
 };
-use sfml::{
-    cpp::FBox,
-    graphics::{Drawable, Font, RcText, RenderStates, Text, Transform, Vertex},
-    system::{SfStr, Vector2},
-};
+use sfml::graphics::{Drawable, Font, Text};
 use tokio::sync::mpsc::Sender;
 
 /// Action size in pixels

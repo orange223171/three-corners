@@ -3,10 +3,7 @@
 use std::sync::Arc;
 
 use core_3c::{board::Board, vector::Vector};
-use sfml::{
-    graphics::{Drawable, RcSprite, Rect, Sprite, Transform, Transformable},
-    system::Vector2f,
-};
+use sfml::graphics::{Drawable, RcSprite, Transformable};
 use tokio::sync::Mutex;
 
 use crate::texture_pack::TexturePack;
