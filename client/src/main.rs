@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    io::Read,
     net::{IpAddr, Ipv4Addr, SocketAddr},
     sync::Arc,
 };
@@ -44,11 +45,14 @@ async fn main() {
         connection.sender.clone(),
     ));
 
+    let mut player = String::new();
+    std::io::stdin()
+        .read_line(&mut player)
+        .expect("fail to read player's name");
+
     connection
         .sender
-        .send(Message::LogIn(LogInMessage {
-            player: String::from("orange"),
-        }))
+        .send(Message::LogIn(LogInMessage { player: player }))
         .await
         .unwrap();
 
