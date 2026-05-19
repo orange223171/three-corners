@@ -77,6 +77,47 @@ impl Game {
         })
     }
 
+    pub fn round(&mut self) -> Vec<Message> {
+        let mut v: Vec<Message> = Vec::new();
+
+        for x in 0..11 {
+            for y in 0..10 {
+                if let Some(building) = self
+                    .board
+                    .triangle(Vector { x: x, y: y })
+                    .expect("out of bounds")
+                {
+                    let mut state = self
+                        .player_states
+                        .get(&building.player)
+                        .expect("not found player")
+                        .clone();
+
+                    let building_info = self
+                        .board
+                        .kit()
+                        .building_kit()
+                        .get(&building.name)
+                        .expect("not found building info in kit");
+
+                    state.economic += building_info.base_economic_profit;
+                    state.politic += building_info.base_politic_profit;
+                    state.authority += building_info.base_authority_grab_n;
+
+                    self.player_states
+                        .insert(building.player.clone(), state.clone());
+
+                    v.append(&mut vec![Message::PlayerState(PlayerStateMessage {
+                        player: building.player.clone(),
+                        state: state,
+                    })])
+                }
+            }
+        }
+
+        v
+    }
+
     /// Builds from BuildMessage
     pub fn build(&mut self, build_message: BuildMessage, player: String) -> Vec<Message> {
         match self.board.triangle(build_message.location) {

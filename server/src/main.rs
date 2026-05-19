@@ -1,11 +1,16 @@
 use std::{
     collections::HashMap,
     net::{IpAddr, Ipv4Addr, SocketAddr},
+    sync::Arc,
+    time::Duration,
 };
 
 use network_core::message::Message;
-use network_server::connection::{Connection, ConnectionMessage};
-use tokio::sync::mpsc;
+use network_server::connection::{self, Connection, ConnectionMessage};
+use tokio::{
+    sync::{Mutex, mpsc},
+    time::{self, Instant},
+};
 
 use logic_3c::game::Game;
 
@@ -16,28 +21,49 @@ async fn main() {
         23171,
     ));
 
-    let mut connections_list: HashMap<SocketAddr, mpsc::Sender<Message>> = HashMap::new();
+    let connections_list: Arc<Mutex<HashMap<SocketAddr, mpsc::Sender<Message>>>> =
+        Arc::new(Mutex::new(HashMap::new()));
     let mut players_list: HashMap<SocketAddr, String> = HashMap::new();
 
-    let mut game = Game::new();
+    let game = Arc::new(Mutex::new(Game::new()));
+
+    let game_mutex = game.clone();
+    let connections_list_mutex = connections_list.clone();
+    tokio::spawn(async move {
+        let mut interval = time::interval(Duration::from_secs(15));
+
+        loop {
+            interval.tick().await;
+
+            let messages = game_mutex.lock().await.round();
+
+            let connections_list = connections_list_mutex.lock().await;
+
+            for message in messages {
+                for (_, sender) in connections_list.clone() {
+                    sender.send(message.clone()).await.unwrap();
+                }
+            }
+        }
+    });
 
     loop {
         match connection.reciever.recv().await {
             Some(connection_message) => match connection_message {
                 ConnectionMessage::Connect(socket, sender) => {
-                    connections_list.insert(socket, sender);
+                    connections_list.lock().await.insert(socket, sender);
                 }
                 ConnectionMessage::Disconnect(socket) => {
-                    connections_list.remove(&socket);
+                    connections_list.lock().await.remove(&socket);
                     players_list.remove(&socket);
                 }
                 ConnectionMessage::Message(socket, message) => {
                     message_handler(
                         message,
                         &socket,
-                        &connections_list,
+                        &*connections_list.lock().await,
                         &mut players_list,
-                        &mut game,
+                        &mut *game.lock().await,
                     )
                     .await;
                 }
