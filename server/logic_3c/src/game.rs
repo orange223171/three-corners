@@ -34,6 +34,33 @@ impl Game {
         }
     }
 
+    /// Returns a list of messages with all info of the game
+    pub fn get_info(&self) -> Vec<Message> {
+        let mut v: Vec<Message> = Vec::new();
+
+        for x in 0..11 {
+            for y in 0..10 {
+                v.append(&mut vec![Message::SetTriangle(SetTriangleMessage {
+                    location: Vector { x: x, y: y },
+                    triangle: self
+                        .board
+                        .triangle(Vector { x: x, y: y })
+                        .expect("out of bounds")
+                        .clone(),
+                })])
+            }
+        }
+
+        self.player_states.iter().for_each(|player_state| {
+            v.append(&mut vec![Message::PlayerState(PlayerStateMessage {
+                player: player_state.0.clone(),
+                state: player_state.1.clone(),
+            })])
+        });
+
+        v
+    }
+
     /// Adds player to the game with default states
     pub fn add_player(&mut self, player: String) -> Message {
         let state = PlayerState {

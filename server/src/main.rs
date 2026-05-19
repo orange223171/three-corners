@@ -61,8 +61,18 @@ async fn message_handler(
         Message::VersionResponce(version_responce_message) => todo!(),
         Message::LogIn(log_in_message) => {
             players_list.insert(socket.clone(), log_in_message.player.clone());
-            let message = game.add_player(log_in_message.player);
 
+            let messages = game.get_info();
+            for message in messages {
+                connections_list
+                    .get(&socket)
+                    .expect("Not found sender")
+                    .send(message)
+                    .await
+                    .unwrap();
+            }
+
+            let message = game.add_player(log_in_message.player);
             for (_, sender) in connections_list {
                 sender.send(message.clone()).await.unwrap()
             }
