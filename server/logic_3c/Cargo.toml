@@ -1,0 +1,8 @@
+[package]
+name = "logic_3c"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+core_3c = { workspace = true }
+network_core = { workspace = true }

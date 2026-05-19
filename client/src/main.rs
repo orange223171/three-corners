@@ -4,22 +4,12 @@ use std::{
     sync::Arc,
 };
 
-use core_3c::{
-    board::{Board, Triangle},
-    kit::Kit,
-    player_state::PlayerState,
-    vector::Vector,
-};
+use core_3c::{board::Board, kit::Kit, player_state::PlayerState, vector::Vector};
 use network_client::connection::Connection;
-use network_core::{
-    bytes_represented::{
-        build_message::BuildMessage, destroy_message::DestroyMessage, log_in_message::LogInMessage,
-    },
-    message::Message,
-};
+use network_core::{bytes_represented::log_in_message::LogInMessage, message::Message};
 use sfml::{
     cpp::FBox,
-    graphics::{Color, RcSprite, RenderStates, RenderTarget, RenderWindow, Transformable},
+    graphics::{Color, RenderStates, RenderTarget, RenderWindow},
     window::{ContextSettings, Event, Style, VideoMode, mouse::Button},
 };
 use tokio::sync::{Mutex, mpsc};
