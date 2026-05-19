@@ -52,22 +52,7 @@ async fn message_handler(
     game: &mut Game,
 ) {
     match message {
-        Message::Ok => {
-            connections_list
-                .get(socket)
-                .unwrap()
-                .send(Message::SetTriangle(SetTriangleMessage {
-                    location: Vector { x: 5, y: 5 },
-                    triangle: Some(Building {
-                        name: String::from("field"),
-                        player: String::from("orange"),
-                        build_in_current_round: false,
-                        synergies: Vec::new(),
-                    }),
-                }))
-                .await
-                .unwrap();
-        }
+        Message::Ok => (),
         Message::Error(error_message) => todo!(),
         Message::VersionRequest => todo!(),
         Message::VersionResponce(version_responce_message) => todo!(),
