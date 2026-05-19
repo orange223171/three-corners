@@ -3,13 +3,6 @@ use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
 };
 
-use core_3c::{
-    board::Board, building::Building, info::synergy::SynergyInfo, kit::Kit,
-    player_state::PlayerState, vector::Vector,
-};
-use network_core::bytes_represented::{
-    player_state_message::PlayerStateMessage, set_triangle_message::SetTriangleMessage,
-};
 use network_core::message::Message;
 use network_server::connection::{Connection, ConnectionMessage};
 use tokio::sync::mpsc;
@@ -53,7 +46,7 @@ async fn message_handler(
 ) {
     match message {
         Message::Ok => (),
-        Message::Error(error_message) => todo!(),
+        Message::Error(error_message) => println!("{:?}", error_message),
         Message::VersionRequest => todo!(),
         Message::VersionResponce(version_responce_message) => todo!(),
         Message::LogIn(log_in_message) => {

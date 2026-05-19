@@ -84,6 +84,8 @@ impl Message {
             }
         }
 
+        v.append(&mut vec![0; 8192 - v.len()]);
+
         v
     }
 
