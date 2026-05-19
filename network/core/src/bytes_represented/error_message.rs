@@ -7,7 +7,7 @@ const FAIL_TO_LOG_IN: u32 = 1;
 const UNEXPECTED_MESSAGE: u32 = 2;
 
 /// An error message
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ErrorMessage {
     OperationDenied,
     FailToLogIn,

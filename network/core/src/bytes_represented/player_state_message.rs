@@ -5,6 +5,7 @@ use core_3c::player_state::PlayerState;
 use crate::bytes_represented::BytesRepresented;
 
 /// A message with player state
+#[derive(Debug, Clone)]
 pub struct PlayerStateMessage {
     /// A player
     pub player: String,

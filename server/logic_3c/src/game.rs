@@ -3,19 +3,12 @@
 use std::collections::HashMap;
 
 use core_3c::{
-    board::Board,
-    building::Building,
-    kit::Kit,
-    player_state::{self, PlayerState},
-    vector::Vector,
+    board::Board, building::Building, kit::Kit, player_state::PlayerState, vector::Vector,
 };
 use network_core::{
     bytes_represented::{
-        build_message::{self, BuildMessage},
-        destroy_message::DestroyMessage,
-        grab_message::GrabMessage,
-        player_state_message::PlayerStateMessage,
-        set_triangle_message::SetTriangleMessage,
+        build_message::BuildMessage, destroy_message::DestroyMessage, grab_message::GrabMessage,
+        player_state_message::PlayerStateMessage, set_triangle_message::SetTriangleMessage,
     },
     message::Message,
 };
@@ -242,7 +235,7 @@ impl Game {
                     Some(building_info) => {
                         if state.authority >= building_info.base_grab_price {
                             let mut state = state.clone();
-                            state.politic -= building_info.base_destroy_price;
+                            state.authority -= building_info.base_grab_price;
                             self.player_states.insert(player.clone(), state);
                         } else {
                             return vec![Message::Error(
@@ -305,9 +298,23 @@ impl Game {
             .player
             .clone();
 
-        grabing_state.economic -= building_info.base_economic_grab_n;
-        grabing_state.politic -= building_info.base_politic_grab_n;
-        grabing_state.authority -= building_info.base_authority_grab_n;
+        if grabing_state.economic < building_info.base_economic_grab_n {
+            grabing_state.economic = 0;
+        } else {
+            grabing_state.economic -= building_info.base_economic_grab_n;
+        }
+
+        if grabing_state.politic < building_info.base_politic_grab_n {
+            grabing_state.politic = 0;
+        } else {
+            grabing_state.politic -= building_info.base_politic_grab_n;
+        }
+
+        if grabing_state.authority < building_info.base_authority_grab_n {
+            grabing_state.authority = 0;
+        } else {
+            grabing_state.authority -= building_info.base_authority_grab_n;
+        }
 
         self.player_states
             .insert(grabing_player.clone(), grabing_state.clone());

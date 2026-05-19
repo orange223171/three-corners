@@ -263,7 +263,7 @@ async fn handler_message(
 ) {
     match message {
         Message::Ok => (),
-        Message::Error(error_message) => todo!(),
+        Message::Error(error_message) => println!("{:?}", error_message),
         Message::VersionRequest => todo!(),
         Message::VersionResponce(version_responce_message) => (),
         Message::LogIn(_) => (),

@@ -4,8 +4,8 @@ use std::{
 };
 
 use core_3c::{
-    board::Board, building::Building, game::Game, kit::Kit, player_state::PlayerState,
-    vector::Vector,
+    board::Board, building::Building, info::synergy::SynergyInfo, kit::Kit,
+    player_state::PlayerState, vector::Vector,
 };
 use network_core::bytes_represented::{
     player_state_message::PlayerStateMessage, set_triangle_message::SetTriangleMessage,
@@ -13,6 +13,8 @@ use network_core::bytes_represented::{
 use network_core::message::Message;
 use network_server::connection::{Connection, ConnectionMessage};
 use tokio::sync::mpsc;
+
+use logic_3c::game::Game;
 
 #[tokio::main]
 async fn main() {
@@ -23,14 +25,7 @@ async fn main() {
 
     let mut connections_list: HashMap<SocketAddr, mpsc::Sender<Message>> = HashMap::new();
 
-    let mut game = Game {
-        board: Board::new(
-            Vector { x: 10, y: 11 },
-            Kit::from_files(String::from("core_3c/data/"))
-                .expect("Error to load kit from core_3c/data/"),
-        ),
-        player_states: HashMap::new(),
-    };
+    let mut game = Game::new();
 
     loop {
         match connection.reciever.recv().await {
@@ -77,113 +72,37 @@ async fn message_handler(
         Message::VersionRequest => todo!(),
         Message::VersionResponce(version_responce_message) => todo!(),
         Message::LogIn(log_in_message) => {
-            let player = log_in_message.player;
-            let state = PlayerState {
-                economic: 5,
-                politic: 5,
-                authority: 5,
-            };
+            let message = game.add_player(log_in_message.player);
 
-            game.player_states.insert(player.clone(), state.clone());
             for (_, sender) in connections_list {
-                sender
-                    .send(Message::PlayerState(PlayerStateMessage {
-                        player: player.clone(),
-                        state: state.clone(),
-                    }))
-                    .await
-                    .unwrap()
+                sender.send(message.clone()).await.unwrap()
             }
         }
         Message::Build(build_message) => {
-            game.board
-                .set_triangle(
-                    Some(Building {
-                        name: build_message.build_name.clone(),
-                        player: String::from("orange"),
-                        build_in_current_round: true,
-                        synergies: Vec::new(),
-                    }),
-                    build_message.location,
-                )
-                .expect("board error, here must be normall error");
+            let messages = game.build(build_message, String::from("orange"));
 
-            for (_, sender) in connections_list {
-                sender
-                    .send(Message::SetTriangle(SetTriangleMessage {
-                        location: build_message.location,
-                        triangle: Some(Building {
-                            name: build_message.build_name.clone(),
-                            player: String::from(""),
-                            build_in_current_round: true,
-                            synergies: Vec::new(),
-                        }),
-                    }))
-                    .await
-                    .unwrap()
+            for message in messages {
+                for (_, sender) in connections_list {
+                    sender.send(message.clone()).await.unwrap();
+                }
             }
         }
         Message::Destroy(destroy_message) => {
-            for (_, sender) in connections_list {
-                sender
-                    .send(Message::SetTriangle(SetTriangleMessage {
-                        location: destroy_message.location,
-                        triangle: None,
-                    }))
-                    .await
-                    .unwrap()
+            let messages = game.destroy(destroy_message, String::from("orange"));
+
+            for message in messages {
+                for (_, sender) in connections_list {
+                    sender.send(message.clone()).await.unwrap();
+                }
             }
         }
         Message::Grab(grab_message) => {
-            let building = game
-                .board
-                .triangle(grab_message.location)
-                .expect("out of bounds, here must be normal error")
-                .as_ref()
-                .expect("empty triangle, here must be normal error");
+            let messages = game.grab(grab_message, String::from("orange"));
 
-            let building_info = game
-                .board
-                .kit()
-                .building_kit()
-                .get(&building.name)
-                .expect("Not found building in kit, here must be normal error");
-
-            let mut state = game
-                .player_states
-                .get(&building.player)
-                .expect("Not found player, here must be normal error")
-                .clone();
-
-            if state.economic < building_info.base_economic_grab_n {
-                state.economic = 0;
-            } else {
-                state.economic -= building_info.base_economic_grab_n;
-            }
-
-            if state.politic < building_info.base_politic_grab_n {
-                state.politic = 0;
-            } else {
-                state.politic -= building_info.base_politic_grab_n;
-            }
-
-            if state.authority < building_info.base_authority_grab_n {
-                state.authority = 0;
-            } else {
-                state.authority -= building_info.base_authority_grab_n;
-            }
-
-            game.player_states
-                .insert(building.player.clone(), state.clone());
-
-            for (_, sender) in connections_list {
-                sender
-                    .send(Message::PlayerState(PlayerStateMessage {
-                        player: building.player.clone(),
-                        state: state.clone(),
-                    }))
-                    .await
-                    .unwrap();
+            for message in messages {
+                for (_, sender) in connections_list {
+                    sender.send(message.clone()).await.unwrap();
+                }
             }
         }
         Message::SetTriangle(_) => connections_list

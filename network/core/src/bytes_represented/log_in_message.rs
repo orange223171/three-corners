@@ -3,7 +3,7 @@
 use crate::bytes_represented::BytesRepresented;
 
 /// A log in message
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LogInMessage {
     /// A player
     pub player: String,

@@ -23,6 +23,7 @@ const SET_TRIANGLE_MESSAGE: u32 = 64;
 const PLAYER_STATE_MESSAGE: u32 = 65;
 
 /// A network message
+#[derive(Debug, Clone)]
 pub enum Message {
     Ok,
     Error(ErrorMessage),
