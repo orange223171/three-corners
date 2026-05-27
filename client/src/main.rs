@@ -125,7 +125,7 @@ async fn init() -> (
     TexturePack,
 ) {
     let window = RenderWindow::new(
-        VideoMode::new(800, 600, 32),
+        VideoMode::new(1920, 1080, 32),
         "three corners",
         Style::CLOSE,
         &ContextSettings::default(),
@@ -161,7 +161,7 @@ fn draw(
     window.draw_with_renderstates(players_states_box, &players_states_box_render_states);
 
     let mut board_box_render_states = RenderStates::DEFAULT;
-    board_box_render_states.transform.translate(100.0, 100.0);
+    board_box_render_states.transform.translate(400.0, 300.0);
     window.draw_with_renderstates(board_box, &board_box_render_states);
 
     let mut actions_menu_render_states = RenderStates::DEFAULT;
@@ -210,11 +210,11 @@ async fn handler_sfml_event(
                     .handle_button_pressing(x, y, sender.clone())
                     .await;
             }
-            if (x < 100) || (y < 84) || (x > 276) || (y > 394) {
+            if (x < 400) || (y < 284) || (x > 576) || (y > 594) {
                 ()
             } else {
-                let x = x - 100;
-                let y = y - 84;
+                let x = x - 400;
+                let y = y - 284;
 
                 let x = if x % 16 <= 7 {
                     (x / 16) as u32
