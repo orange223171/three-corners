@@ -91,6 +91,35 @@ async fn message_handler(
         Message::VersionRequest => todo!(),
         Message::VersionResponce(version_responce_message) => todo!(),
         Message::LogIn(log_in_message) => {
+            match db.get_hash(log_in_message.player.clone()).await {
+                Ok(hash) => {
+                    if hash != log_in_message.password {
+                        connections_list
+                            .get(socket)
+                            .expect("Not found sender")
+                            .send(Message::Error(
+                                network_core::bytes_represented::error_message::ErrorMessage::FailToLogIn
+                            ))
+                            .await
+                            .unwrap();
+
+                        return;
+                    }
+                }
+                Err(_) => {
+                    connections_list
+                        .get(socket)
+                        .expect("Not found sender")
+                        .send(Message::Error(
+                            network_core::bytes_represented::error_message::ErrorMessage::FailToLogIn,
+                        ))
+                        .await
+                        .unwrap();
+
+                    return;
+                }
+            }
+
             players_list.insert(socket.clone(), log_in_message.player.clone());
 
             let messages = game.get_info();

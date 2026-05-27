@@ -45,10 +45,20 @@ async fn main() {
     std::io::stdin()
         .read_line(&mut player)
         .expect("fail to read player's name");
+    let player = player.trim().to_string();
+
+    let mut password = String::new();
+    std::io::stdin()
+        .read_line(&mut password)
+        .expect("fail to read password");
+    let password = password.trim().to_string();
 
     connection
         .sender
-        .send(Message::LogIn(LogInMessage { player: player }))
+        .send(Message::LogIn(LogInMessage {
+            player: player,
+            password: password,
+        }))
         .await
         .unwrap();
 

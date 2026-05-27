@@ -7,11 +7,17 @@ use crate::bytes_represented::BytesRepresented;
 pub struct LogInMessage {
     /// A player
     pub player: String,
+    pub password: String,
 }
 
 impl BytesRepresented for LogInMessage {
     fn encode(self) -> Vec<u8> {
-        self.player.encode()
+        let mut v: Vec<u8> = Vec::new();
+
+        v.append(&mut self.player.encode());
+        v.append(&mut self.password.encode());
+
+        v
     }
 
     fn decode(decoder: &mut super::Decoder, bytes: &[u8]) -> Result<Self, super::Error>
@@ -20,6 +26,7 @@ impl BytesRepresented for LogInMessage {
     {
         Result::Ok(Self {
             player: String::decode(decoder, bytes)?,
+            password: String::decode(decoder, bytes)?,
         })
     }
 }
