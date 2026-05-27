@@ -1,6 +1,6 @@
 {
   "name": "farm",
-  "buildings": ["windmill", "windmill", "windmill", "field", "field", "field"],
+  "buildings": ["market", "market", "market", "field", "field", "field"],
 
   "effects": [
     {
