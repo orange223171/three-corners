@@ -34,9 +34,6 @@ async fn main() {
     let board_box = BoardBox::new(board_mutex.clone(), texture_pack);
     let mut actions_menu = ActionsMenu::new();
 
-    actions_menu.set_location(Vector { x: 5, y: 5 });
-    actions_menu.add(Action::Build(String::from("field"), 4));
-
     tokio::spawn(handle_message_loop(
         board_mutex.clone(),
         players_states_mutex.clone(),

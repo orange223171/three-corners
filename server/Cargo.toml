@@ -7,6 +7,8 @@ edition = "2024"
 core_3c = { workspace = true }
 network_core = { workspace = true }
 network_server = { workspace = true }
+
+db = { workspace = true }
 logic_3c = { workspace = true }
 
 tokio = { workspace = true }

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["core_3c", "network/core", "network/client", "network/server", "client", "server", "server/logic_3c"]
+members = ["core_3c", "network/core", "network/client", "network/server", "client", "server", "server/db", "server/logic_3c"]
 
 [workspace.dependencies]
 core_3c = { path = "core_3c" }
@@ -9,6 +9,7 @@ network_core = { path = "network/core" }
 network_client = { path = "network/client" }
 network_server = { path = "network/server" }
 
+db = { path = "server/db" }
 logic_3c = { path = "server/logic_3c" }
 
 serde = { version = "1.0.228", features = ["derive"] }
@@ -18,4 +19,4 @@ tokio = { version = "1", features = ["full"] }
 
 sfml = "0.25.1"
 
-postgres = "0.19.13"
+tokio-postgres = "0.7.17"

@@ -5,11 +5,12 @@ use std::{
     time::Duration,
 };
 
+use db::Db;
 use network_core::message::Message;
-use network_server::connection::{self, Connection, ConnectionMessage};
+use network_server::connection::{Connection, ConnectionMessage};
 use tokio::{
     sync::{Mutex, mpsc},
-    time::{self, Instant},
+    time::{self},
 };
 
 use logic_3c::game::Game;
@@ -47,6 +48,8 @@ async fn main() {
         }
     });
 
+    let mut db = Db::init().await.expect("Error to connect to database");
+
     loop {
         match connection.reciever.recv().await {
             Some(connection_message) => match connection_message {
@@ -64,6 +67,7 @@ async fn main() {
                         &*connections_list.lock().await,
                         &mut players_list,
                         &mut *game.lock().await,
+                        &mut db,
                     )
                     .await;
                 }
@@ -79,6 +83,7 @@ async fn message_handler(
     connections_list: &HashMap<SocketAddr, mpsc::Sender<Message>>,
     players_list: &mut HashMap<SocketAddr, String>,
     game: &mut Game,
+    db: &mut Db,
 ) {
     match message {
         Message::Ok => (),
