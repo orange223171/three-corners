@@ -4,7 +4,7 @@ use crate::bytes_represented::{
     BytesRepresented, Decoder, Error, build_message::BuildMessage, destroy_message::DestroyMessage,
     error_message::ErrorMessage, grab_message::GrabMessage, log_in_message::LogInMessage,
     player_state_message::PlayerStateMessage, set_triangle_message::SetTriangleMessage,
-    version_responce_message::VersionResponceMessage,
+    sign_up_message::SignUpMessage, version_responce_message::VersionResponceMessage,
 };
 
 const OK_MESSAGE: u32 = 0;
@@ -14,6 +14,7 @@ const VERSION_REQUEST_MESSAGE: u32 = 2;
 const VERSION_RESPONCE_MESSAGE: u32 = 3;
 
 const LOG_IN_MESSAGE: u32 = 8;
+const SIGN_UP_MESSAGE: u32 = 9;
 
 const BUILD_MESSAGE: u32 = 16;
 const DESTROY_MESSAGE: u32 = 17;
@@ -29,6 +30,7 @@ pub enum Message {
     Error(ErrorMessage),
 
     LogIn(LogInMessage),
+    SignUp(SignUpMessage),
 
     VersionRequest,
     VersionResponce(VersionResponceMessage),
@@ -55,6 +57,10 @@ impl Message {
             Message::LogIn(log_in_message) => {
                 v.append(&mut LOG_IN_MESSAGE.encode());
                 v.append(&mut log_in_message.encode());
+            }
+            Message::SignUp(register_message) => {
+                v.append(&mut SIGN_UP_MESSAGE.encode());
+                v.append(&mut register_message.encode());
             }
 
             Message::VersionRequest => v.append(&mut VERSION_REQUEST_MESSAGE.encode()),
@@ -104,6 +110,9 @@ impl Message {
 
             LOG_IN_MESSAGE => {
                 Result::Ok(Message::LogIn(LogInMessage::decode(&mut decoder, bytes)?))
+            }
+            SIGN_UP_MESSAGE => {
+                Result::Ok(Message::SignUp(SignUpMessage::decode(&mut decoder, bytes)?))
             }
 
             BUILD_MESSAGE => Result::Ok(Message::Build(BuildMessage::decode(&mut decoder, bytes)?)),

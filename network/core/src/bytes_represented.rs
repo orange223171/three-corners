@@ -9,6 +9,7 @@ pub mod grab_message;
 pub mod log_in_message;
 pub mod player_state_message;
 pub mod set_triangle_message;
+pub mod sign_up_message;
 pub mod version_responce_message;
 
 /// A decoder counting current offset of data array

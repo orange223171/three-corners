@@ -93,7 +93,7 @@ async fn message_handler(
         Message::LogIn(log_in_message) => {
             match db.get_hash(log_in_message.player.clone()).await {
                 Ok(hash) => {
-                    if bcrypt::verify(log_in_message.password.clone(), hash.as_str())
+                    if !bcrypt::verify(log_in_message.password.clone(), hash.as_str())
                         .expect("Error to hash password")
                     {
                         connections_list
@@ -138,6 +138,32 @@ async fn message_handler(
             for (_, sender) in connections_list {
                 sender.send(message.clone()).await.unwrap()
             }
+        }
+        Message::SignUp(sign_up_message) => {
+            if db
+                .get_hash(sign_up_message.player.clone())
+                .await
+                .expect("Error to access db")
+                != String::from("")
+            {
+                connections_list
+                    .get(socket)
+                    .expect("Not found sender")
+                    .send(Message::Error(
+                        network_core::bytes_represented::error_message::ErrorMessage::FailToSignUp,
+                    ))
+                    .await
+                    .unwrap();
+
+                return;
+            }
+
+            let hash = bcrypt::hash(sign_up_message.password.clone(), bcrypt::DEFAULT_COST)
+                .expect("Error to hash password");
+
+            db.add_user(sign_up_message.player, hash)
+                .await
+                .expect("Error to access db");
         }
         Message::Build(build_message) => match players_list.get(socket) {
             Some(player) => {

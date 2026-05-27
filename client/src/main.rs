@@ -6,7 +6,10 @@ use std::{
 
 use core_3c::{board::Board, kit::Kit, player_state::PlayerState, vector::Vector};
 use network_client::connection::Connection;
-use network_core::{bytes_represented::log_in_message::LogInMessage, message::Message};
+use network_core::{
+    bytes_represented::{log_in_message::LogInMessage, sign_up_message::SignUpMessage},
+    message::Message,
+};
 use sfml::{
     cpp::FBox,
     graphics::{Color, RenderStates, RenderTarget, RenderWindow},
@@ -41,26 +44,61 @@ async fn main() {
         connection.sender.clone(),
     ));
 
-    let mut player = String::new();
-    std::io::stdin()
-        .read_line(&mut player)
-        .expect("fail to read player's name");
-    let player = player.trim().to_string();
+    loop {
+        let mut action = String::new();
+        std::io::stdin()
+            .read_line(&mut action)
+            .expect("fail to read action");
+        let action = action.trim();
 
-    let mut password = String::new();
-    std::io::stdin()
-        .read_line(&mut password)
-        .expect("fail to read password");
-    let password = password.trim().to_string();
+        if action == "sign up" {
+            let mut player = String::new();
+            std::io::stdin()
+                .read_line(&mut player)
+                .expect("fail to read player's name");
+            let player = player.trim().to_string();
 
-    connection
-        .sender
-        .send(Message::LogIn(LogInMessage {
-            player: player,
-            password: password,
-        }))
-        .await
-        .unwrap();
+            let mut password = String::new();
+            std::io::stdin()
+                .read_line(&mut password)
+                .expect("fail to read password");
+            let password = password.trim().to_string();
+
+            connection
+                .sender
+                .send(Message::SignUp(SignUpMessage {
+                    player: player,
+                    password: password,
+                }))
+                .await
+                .unwrap();
+        }
+
+        if action == "log in" {
+            let mut player = String::new();
+            std::io::stdin()
+                .read_line(&mut player)
+                .expect("fail to read player's name");
+            let player = player.trim().to_string();
+
+            let mut password = String::new();
+            std::io::stdin()
+                .read_line(&mut password)
+                .expect("fail to read password");
+            let password = password.trim().to_string();
+
+            connection
+                .sender
+                .send(Message::LogIn(LogInMessage {
+                    player: player,
+                    password: password,
+                }))
+                .await
+                .unwrap();
+
+            break;
+        }
+    }
 
     while window.is_open() {
         while let Some(event) = window.poll_event() {
@@ -277,6 +315,7 @@ async fn handler_message(
         Message::VersionRequest => todo!(),
         Message::VersionResponce(version_responce_message) => (),
         Message::LogIn(_) => (),
+        Message::SignUp(_) => (),
         Message::Build(_) => (),
         Message::Destroy(_) => (),
         Message::Grab(_) => (),
