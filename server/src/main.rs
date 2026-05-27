@@ -93,7 +93,9 @@ async fn message_handler(
         Message::LogIn(log_in_message) => {
             match db.get_hash(log_in_message.player.clone()).await {
                 Ok(hash) => {
-                    if hash != log_in_message.password {
+                    if bcrypt::verify(log_in_message.password.clone(), hash.as_str())
+                        .expect("Error to hash password")
+                    {
                         connections_list
                             .get(socket)
                             .expect("Not found sender")

@@ -11,4 +11,5 @@ network_server = { workspace = true }
 db = { workspace = true }
 logic_3c = { workspace = true }
 
+bcrypt = { workspace = true }
 tokio = { workspace = true }
