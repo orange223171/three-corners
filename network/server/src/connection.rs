@@ -1,14 +1,13 @@
 use network_core::message::Message;
-use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt},
-    net::{
-        TcpListener,
-        tcp::{OwnedReadHalf, OwnedWriteHalf},
-    },
-    sync::mpsc,
-};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::{ReadHalf, WriteHalf};
+use tokio::net::TcpListener;
+use tokio::net::TcpStream;
+use tokio::sync::mpsc;
+use tokio_native_tls::{TlsAcceptor, TlsStream};
 
 use std::net::{SocketAddr, TcpListener as StdTcpListener};
+use std::path::Path;
 
 /// A message for updating connections list
 pub enum ConnectionMessage {
@@ -23,6 +22,7 @@ pub struct Connection {
 }
 
 impl Connection {
+    /// Returns a connection
     pub fn init(socket: SocketAddr) -> Self {
         let (read_sender, read_reciever) = mpsc::channel::<ConnectionMessage>(32);
 
@@ -31,9 +31,12 @@ impl Connection {
             .set_nonblocking(true)
             .expect("Error to set nonblocking");
 
+        let tls_acceptor = Self::build_tls_acceptor(std::path::Path::new(""), "");
+
         tokio::spawn(Self::connecting_loop(
             TcpListener::from_std(std_tcp_listener).expect("Error to create async TcpListener"),
             read_sender,
+            tls_acceptor,
         ));
 
         Self {
@@ -41,11 +44,32 @@ impl Connection {
         }
     }
 
-    async fn connecting_loop(listener: TcpListener, read_sender: mpsc::Sender<ConnectionMessage>) {
+    fn build_tls_acceptor(cert_path: &Path, cert_password: &str) -> TlsAcceptor {
+        let pkcs12 = std::fs::read(cert_path)
+            .expect("Error to read certificate file. Make sure the PKCS12 (.pfx) file exists.");
+        let identity = native_tls::Identity::from_pkcs12(&pkcs12, cert_password)
+            .expect("Error to parse certificate. Check that the password is correct.");
+        let native_acceptor = native_tls::TlsAcceptor::builder(identity)
+            .build()
+            .expect("Error to build TLS acceptor");
+
+        native_acceptor.into()
+    }
+
+    async fn connecting_loop(
+        listener: TcpListener,
+        read_sender: mpsc::Sender<ConnectionMessage>,
+        tls_acceptor: TlsAcceptor,
+    ) {
         loop {
             match listener.accept().await {
-                Ok((stream, socket)) => {
-                    let (reading_stream, writing_stream) = stream.into_split();
+                Ok((tcp_stream, socket)) => {
+                    let tls_stream = match tls_acceptor.accept(tcp_stream).await {
+                        Ok(stream) => stream,
+                        Err(_) => continue,
+                    };
+
+                    let (reading_stream, writing_stream) = tokio::io::split(tls_stream);
 
                     let (write_sender, write_reciever) = mpsc::channel::<Message>(32);
 
@@ -54,7 +78,7 @@ impl Connection {
                         .await
                     {
                         Ok(_) => (),
-                        Err(_) => (),
+                        Err(_) => return,
                     }
 
                     tokio::spawn(Self::reading_loop(
@@ -70,7 +94,7 @@ impl Connection {
     }
 
     async fn reading_loop(
-        mut stream: OwnedReadHalf,
+        mut stream: ReadHalf<TlsStream<TcpStream>>,
         read_sender: mpsc::Sender<ConnectionMessage>,
         socket: SocketAddr,
     ) {
@@ -103,7 +127,10 @@ impl Connection {
         }
     }
 
-    async fn writing_loop(mut stream: OwnedWriteHalf, mut reciever: mpsc::Receiver<Message>) {
+    async fn writing_loop(
+        mut stream: WriteHalf<TlsStream<TcpStream>>,
+        mut reciever: mpsc::Receiver<Message>,
+    ) {
         loop {
             match reciever.recv().await {
                 Some(message) => match stream.write(&message.as_bytes()).await {

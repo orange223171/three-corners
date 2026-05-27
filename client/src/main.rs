@@ -31,7 +31,7 @@ mod texture_pack;
 
 #[tokio::main]
 async fn main() {
-    let (mut window, board_mutex, players_states_mutex, connection, texture_pack) = init();
+    let (mut window, board_mutex, players_states_mutex, connection, texture_pack) = init().await;
 
     let players_states_box = PlayersStatesBox::new(players_states_mutex.clone());
     let board_box = BoardBox::new(board_mutex.clone(), texture_pack);
@@ -117,7 +117,7 @@ async fn main() {
     }
 }
 
-fn init() -> (
+async fn init() -> (
     FBox<RenderWindow>,
     Arc<Mutex<Board>>,
     Arc<Mutex<HashMap<String, PlayerState>>>,
@@ -139,11 +139,12 @@ fn init() -> (
     let board = Arc::new(Mutex::new(Board::new(Vector { x: 11, y: 10 }, kit)));
     let players_states = Arc::new(Mutex::new(HashMap::new()));
 
-    let connection = Connection::init(&SocketAddr::new(
-        IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
-        23171,
-    ))
-    .unwrap();
+    let connection = Connection::init(
+        &SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 23171),
+        "localhost",
+    )
+    .await
+    .expect("Error to connect to server");
 
     (window, board, players_states, connection, texture_pack)
 }

@@ -8,3 +8,5 @@ core_3c = { workspace = true }
 network_core = { workspace = true }
 
 tokio = { workspace = true }
+tokio-native-tls = "0.3"
+native-tls = "0.2"

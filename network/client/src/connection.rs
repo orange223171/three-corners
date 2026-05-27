@@ -1,10 +1,12 @@
 use std::net::SocketAddr;
 use std::net::TcpStream as StdTcpStream;
 
-use tokio::io::AsyncWriteExt;
-use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::{ReadHalf, WriteHalf};
+use tokio::net::TcpStream;
 use tokio::sync::mpsc;
-use tokio::{io::AsyncReadExt, net::TcpStream};
+use tokio_native_tls::TlsConnector;
+use tokio_native_tls::TlsStream;
 
 use network_core::message::Message;
 
@@ -17,7 +19,8 @@ pub struct Connection {
 }
 
 impl Connection {
-    pub fn init(socket: &SocketAddr) -> Result<Connection, std::io::Error> {
+    /// Returns a connection
+    pub async fn init(socket: &SocketAddr, domain: &str) -> Result<Connection, std::io::Error> {
         let (connection_sender, handler_reciever) = mpsc::channel::<Message>(32);
         let (handler_sender, connection_reciever) = mpsc::channel::<Message>(32);
 
@@ -25,9 +28,20 @@ impl Connection {
         std_stream
             .set_nonblocking(true)
             .expect("Error to set stream nonblocking");
-        let stream = TcpStream::from_std(std_stream)?;
+        let tcp_stream = TcpStream::from_std(std_stream)?;
 
-        let (reading_stream, writing_stream) = stream.into_split();
+        let native_connector = native_tls::TlsConnector::builder()
+            .danger_accept_invalid_certs(true)
+            .build()
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        let tls_connector: TlsConnector = native_connector.into();
+
+        let tls_stream = tls_connector
+            .connect(domain, tcp_stream)
+            .await
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+
+        let (reading_stream, writing_stream) = tokio::io::split(tls_stream);
 
         tokio::spawn(Self::reading_loop(reading_stream, connection_sender));
         tokio::spawn(Self::writing_loop(writing_stream, connection_reciever));
@@ -38,13 +52,16 @@ impl Connection {
         })
     }
 
-    async fn reading_loop(mut stream: OwnedReadHalf, sender: mpsc::Sender<Message>) {
+    async fn reading_loop(
+        mut stream: ReadHalf<TlsStream<TcpStream>>,
+        sender: mpsc::Sender<Message>,
+    ) {
         loop {
             let mut buf: [u8; 8192] = [0; 8192];
             match stream.read(&mut buf).await {
                 Ok(0) => break,
                 Ok(_) => (),
-                Err(_) => (),
+                Err(_) => break,
             }
 
             match sender
@@ -57,7 +74,10 @@ impl Connection {
         }
     }
 
-    async fn writing_loop(mut stream: OwnedWriteHalf, mut reciever: mpsc::Receiver<Message>) {
+    async fn writing_loop(
+        mut stream: WriteHalf<TlsStream<TcpStream>>,
+        mut reciever: mpsc::Receiver<Message>,
+    ) {
         loop {
             match reciever.recv().await {
                 Some(message) => match stream.write(&message.as_bytes()).await {
