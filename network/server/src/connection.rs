@@ -31,7 +31,10 @@ impl Connection {
             .set_nonblocking(true)
             .expect("Error to set nonblocking");
 
-        let tls_acceptor = Self::build_tls_acceptor(std::path::Path::new(""), "");
+        let tls_acceptor = Self::build_tls_acceptor(
+            std::path::Path::new("/etc/three_corners/server/certificate.pfx"),
+            "",
+        );
 
         tokio::spawn(Self::connecting_loop(
             TcpListener::from_std(std_tcp_listener).expect("Error to create async TcpListener"),
@@ -48,7 +51,7 @@ impl Connection {
         let pkcs12 = std::fs::read(cert_path)
             .expect("Error to read certificate file. Make sure the PKCS12 (.pfx) file exists.");
         let identity = native_tls::Identity::from_pkcs12(&pkcs12, cert_password)
-            .expect("Error to parse certificate. Check that the password is correct.");
+            .expect("Error to parse certificate");
         let native_acceptor = native_tls::TlsAcceptor::builder(identity)
             .build()
             .expect("Error to build TLS acceptor");

@@ -16,6 +16,14 @@ use tokio::{
 use logic_3c::game::Game;
 use totp_rs::Secret;
 
+use crate::message_handlers::{
+    build_message_handler, destroy_message_handler, error_message_handler, grab_message_handler,
+    log_in_message_handler, player_state_message_handler, set_triangle_message_handler,
+    sign_up_message_handler,
+};
+
+mod message_handlers;
+
 #[tokio::main]
 async fn main() {
     let secret = Secret::generate_secret();
@@ -90,147 +98,40 @@ async fn message_handler(
 ) {
     match message {
         Message::Ok => (),
-        Message::Error(error_message) => println!("{:?}", error_message),
+        Message::Error(error_message) => error_message_handler(error_message),
         Message::VersionRequest => todo!(),
         Message::VersionResponce(version_responce_message) => todo!(),
         Message::LogIn(log_in_message) => {
-            match db.get_hash(log_in_message.player.clone()).await {
-                Ok(hash) => {
-                    if !bcrypt::verify(log_in_message.password.clone(), hash.as_str())
-                        .expect("Error to hash password")
-                    {
-                        connections_list
-                            .get(socket)
-                            .expect("Not found sender")
-                            .send(Message::Error(
-                                network_core::bytes_represented::error_message::ErrorMessage::FailToLogIn
-                            ))
-                            .await
-                            .unwrap();
-
-                        return;
-                    }
-                }
-                Err(_) => {
-                    connections_list
-                        .get(socket)
-                        .expect("Not found sender")
-                        .send(Message::Error(
-                            network_core::bytes_represented::error_message::ErrorMessage::FailToLogIn,
-                        ))
-                        .await
-                        .unwrap();
-
-                    return;
-                }
-            }
-
-            players_list.insert(socket.clone(), log_in_message.player.clone());
-
-            let messages = game.get_info();
-            for message in messages {
-                connections_list
-                    .get(&socket)
-                    .expect("Not found sender")
-                    .send(message)
-                    .await
-                    .unwrap();
-            }
-
-            let message = game.add_player(log_in_message.player);
-            for (_, sender) in connections_list {
-                sender.send(message.clone()).await.unwrap()
-            }
+            log_in_message_handler(
+                log_in_message,
+                socket,
+                connections_list,
+                players_list,
+                game,
+                db,
+            )
+            .await
         }
         Message::SignUp(sign_up_message) => {
-            if db
-                .get_hash(sign_up_message.player.clone())
-                .await
-                .expect("Error to access db")
-                != String::from("")
-            {
-                connections_list
-                    .get(socket)
-                    .expect("Not found sender")
-                    .send(Message::Error(
-                        network_core::bytes_represented::error_message::ErrorMessage::FailToSignUp,
-                    ))
-                    .await
-                    .unwrap();
-
-                return;
-            }
-
-            let hash = bcrypt::hash(sign_up_message.password.clone(), bcrypt::DEFAULT_COST)
-                .expect("Error to hash password");
-
-            db.add_user(sign_up_message.player, hash)
-                .await
-                .expect("Error to access db");
+            sign_up_message_handler(sign_up_message, socket, connections_list, db).await
         }
-        Message::Build(build_message) => match players_list.get(socket) {
-            Some(player) => {
-                let messages = game.build(build_message, player.clone());
-
-                for message in messages {
-                    for (_, sender) in connections_list {
-                        sender.send(message.clone()).await.unwrap();
-                    }
-                }
-            }
-            None => {
-                connections_list.get(&socket).expect("Not found sender").send(Message::Error(
-                        network_core::bytes_represented::error_message::ErrorMessage::OperationDenied
-                    )).await.unwrap();
-            }
-        },
-        Message::Destroy(destroy_message) => match players_list.get(socket) {
-            Some(player) => {
-                let messages = game.destroy(destroy_message, player.clone());
-
-                for message in messages {
-                    for (_, sender) in connections_list {
-                        sender.send(message.clone()).await.unwrap();
-                    }
-                }
-            }
-            None => {
-                connections_list.get(&socket).expect("Not found sender").send(Message::Error(
-                        network_core::bytes_represented::error_message::ErrorMessage::OperationDenied
-                    )).await.unwrap();
-            }
-        },
-        Message::Grab(grab_message) => match players_list.get(socket) {
-            Some(player) => {
-                let messages = game.grab(grab_message, player.clone());
-
-                for message in messages {
-                    for (_, sender) in connections_list {
-                        sender.send(message.clone()).await.unwrap();
-                    }
-                }
-            }
-            None => {
-                connections_list.get(&socket).expect("Not found sender").send(Message::Error(
-                        network_core::bytes_represented::error_message::ErrorMessage::OperationDenied
-                    )).await.unwrap();
-            }
-        },
-        Message::SetTriangle(_) => connections_list
-            .get(socket)
-            .expect("Not found sender")
-            .send(Message::Error(
-                network_core::bytes_represented::error_message::ErrorMessage::UnexpectedMessage,
-            ))
+        Message::Build(build_message) => {
+            build_message_handler(build_message, socket, connections_list, players_list, game).await
+        }
+        Message::Destroy(destroy_message) => {
+            destroy_message_handler(
+                destroy_message,
+                socket,
+                connections_list,
+                players_list,
+                game,
+            )
             .await
-            .unwrap(),
-        Message::PlayerState(_) => connections_list
-            .get(socket)
-            .expect("Not found sender")
-            .send(Message::Error(
-                network_core::bytes_represented::error_message::ErrorMessage::UnexpectedMessage,
-            ))
-            .await
-            .unwrap(),
+        }
+        Message::Grab(grab_message) => {
+            grab_message_handler(grab_message, socket, connections_list, players_list, game).await
+        }
+        Message::SetTriangle(_) => set_triangle_message_handler(socket, connections_list).await,
+        Message::PlayerState(_) => player_state_message_handler(socket, connections_list).await,
     }
 }
