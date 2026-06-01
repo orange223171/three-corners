@@ -13,3 +13,4 @@ logic_3c = { workspace = true }
 
 bcrypt = { workspace = true }
 tokio = { workspace = true }
+totp-rs = { workspace = true }

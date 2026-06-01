@@ -14,9 +14,12 @@ use tokio::{
 };
 
 use logic_3c::game::Game;
+use totp_rs::Secret;
 
 #[tokio::main]
 async fn main() {
+    let secret = Secret::generate_secret();
+    println!("{}", secret.to_string());
     let mut connection = Connection::init(SocketAddr::new(
         IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
         23171,
