@@ -27,11 +27,9 @@ mod texture_pack;
 
 #[tokio::main]
 async fn main() {
-    // Phase 1: Authentication (RAII window, closes when done)
     let auth_window = AuthWindow::new().await;
     let connection = auth_window.run().await;
 
-    // Phase 2: Game
     let (mut window, board_mutex, players_states_mutex, texture_pack) = init().await;
 
     let players_states_box = PlayersStatesBox::new(players_states_mutex.clone());

@@ -547,10 +547,10 @@ impl AuthWindow {
                 use network_core::bytes_represented::error_message::ErrorMessage;
                 self.info_text.clear();
                 self.error_text = match error_message {
-                    ErrorMessage::FailToLogIn => "Failed to log in. Check credentials.",
-                    ErrorMessage::FailToSignUp => "Failed to sign up. Name may be taken.",
-                    ErrorMessage::OperationDenied => "Operation denied by server.",
-                    ErrorMessage::UnexpectedMessage => "Server sent unexpected response.",
+                    ErrorMessage::FailToLogIn => "Failed to log in",
+                    ErrorMessage::FailToSignUp => "Failed to sign up. User name may be taken",
+                    ErrorMessage::OperationDenied => "Operation denied by server",
+                    ErrorMessage::UnexpectedMessage => "Server recieve unexpected message",
                 }
                 .to_string();
             }
@@ -617,8 +617,8 @@ impl AuthWindow {
 
                 // Toggle mode button
                 let toggle_label = match self.mode {
-                    AuthMode::Login => "Sign Up instead",
-                    AuthMode::SignUp => "Log In instead",
+                    AuthMode::Login => "Sign Up",
+                    AuthMode::SignUp => "Log In",
                 };
                 let toggle = self.button_with_label(&self.toggle_mode_button, toggle_label);
                 self.window.draw(&toggle);
