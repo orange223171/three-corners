@@ -1,10 +1,15 @@
 //! Message definitions
 
-use crate::bytes_represented::{
-    BytesRepresented, Decoder, Error, build_message::BuildMessage, destroy_message::DestroyMessage,
-    error_message::ErrorMessage, grab_message::GrabMessage, log_in_message::LogInMessage,
-    player_state_message::PlayerStateMessage, set_triangle_message::SetTriangleMessage,
-    sign_up_message::SignUpMessage, version_responce_message::VersionResponceMessage,
+use crate::{
+    bytes_represented::{
+        BytesRepresented, Decoder, Error, add_2fa_responce_message::Add2faResponceMessage,
+        build_message::BuildMessage, destroy_message::DestroyMessage, error_message::ErrorMessage,
+        grab_message::GrabMessage, log_in_message::LogInMessage,
+        player_state_message::PlayerStateMessage, set_triangle_message::SetTriangleMessage,
+        sign_up_message::SignUpMessage, totp_responce_message::TotpResponceMessage,
+        version_responce_message::VersionResponceMessage,
+    },
+    message::Message::Remove2fa,
 };
 
 const OK_MESSAGE: u32 = 0;
@@ -15,6 +20,13 @@ const VERSION_RESPONCE_MESSAGE: u32 = 3;
 
 const LOG_IN_MESSAGE: u32 = 8;
 const SIGN_UP_MESSAGE: u32 = 9;
+
+const TOTP_REQUEST_MESSAGE: u32 = 10;
+const TOTP_RESPONCE_MESSAGE: u32 = 11;
+
+const ADD_2FA_REQUEST_MESSAGE: u32 = 12;
+const ADD_2FA_RESPONCE_MESSAGE: u32 = 13;
+const REMOVE_2FA_MESSAGE: u32 = 14;
 
 const BUILD_MESSAGE: u32 = 16;
 const DESTROY_MESSAGE: u32 = 17;
@@ -31,6 +43,13 @@ pub enum Message {
 
     LogIn(LogInMessage),
     SignUp(SignUpMessage),
+
+    TotpRequest,
+    TotpResponce(TotpResponceMessage),
+
+    Add2faRequest,
+    Add2faResponce(Add2faResponceMessage),
+    Remove2fa,
 
     VersionRequest,
     VersionResponce(VersionResponceMessage),
@@ -61,6 +80,25 @@ impl Message {
             Message::SignUp(register_message) => {
                 v.append(&mut SIGN_UP_MESSAGE.encode());
                 v.append(&mut register_message.encode());
+            }
+
+            Message::TotpRequest => {
+                v.append(&mut TOTP_REQUEST_MESSAGE.encode());
+            }
+            Message::TotpResponce(totp_responce_message) => {
+                v.append(&mut TOTP_RESPONCE_MESSAGE.encode());
+                v.append(&mut totp_responce_message.encode());
+            }
+
+            Message::Add2faRequest => {
+                v.append(&mut ADD_2FA_REQUEST_MESSAGE.encode());
+            }
+            Message::Add2faResponce(add_2fa_responce_message) => {
+                v.append(&mut ADD_2FA_RESPONCE_MESSAGE.encode());
+                v.append(&mut add_2fa_responce_message.encode());
+            }
+            Message::Remove2fa => {
+                v.append(&mut REMOVE_2FA_MESSAGE.encode());
             }
 
             Message::VersionRequest => v.append(&mut VERSION_REQUEST_MESSAGE.encode()),
@@ -114,6 +152,17 @@ impl Message {
             SIGN_UP_MESSAGE => {
                 Result::Ok(Message::SignUp(SignUpMessage::decode(&mut decoder, bytes)?))
             }
+
+            TOTP_REQUEST_MESSAGE => Result::Ok(Message::TotpRequest),
+            TOTP_RESPONCE_MESSAGE => Result::Ok(Message::TotpResponce(
+                TotpResponceMessage::decode(&mut decoder, bytes)?,
+            )),
+
+            ADD_2FA_REQUEST_MESSAGE => Result::Ok(Message::Add2faRequest),
+            ADD_2FA_RESPONCE_MESSAGE => Result::Ok(Message::Add2faResponce(
+                Add2faResponceMessage::decode(&mut decoder, bytes)?,
+            )),
+            REMOVE_2FA_MESSAGE => Result::Ok(Message::Remove2fa),
 
             BUILD_MESSAGE => Result::Ok(Message::Build(BuildMessage::decode(&mut decoder, bytes)?)),
             DESTROY_MESSAGE => Result::Ok(Message::Destroy(DestroyMessage::decode(

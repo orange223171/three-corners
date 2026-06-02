@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use core_3c::{building::Building, player_state::PlayerState, vector::Vector};
 
+pub mod add_2fa_responce_message;
 pub mod build_message;
 pub mod destroy_message;
 pub mod error_message;
@@ -10,6 +11,7 @@ pub mod log_in_message;
 pub mod player_state_message;
 pub mod set_triangle_message;
 pub mod sign_up_message;
+pub mod totp_responce_message;
 pub mod version_responce_message;
 
 /// A decoder counting current offset of data array
