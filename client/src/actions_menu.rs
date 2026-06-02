@@ -51,14 +51,20 @@ pub struct ActionsMenu {
     actions: Vec<Action>,
     /// triangle location
     location: Option<Vector>,
+    /// owner of the selected building (if any)
+    owner: Option<String>,
+    /// current player name
+    player_name: String,
 }
 
 impl ActionsMenu {
     /// Returns empty actions menu
-    pub fn new() -> Self {
+    pub fn new(player_name: String) -> Self {
         Self {
             actions: Vec::new(),
             location: None,
+            owner: None,
+            player_name,
         }
     }
 
@@ -66,9 +72,14 @@ impl ActionsMenu {
         self.location = Some(location);
     }
 
+    pub fn set_owner(&mut self, owner: Option<String>) {
+        self.owner = owner;
+    }
+
     /// Clears actions menu
     pub fn clear(&mut self) {
         self.actions.clear();
+        self.owner = None;
     }
 
     /// Add action to the actions menu
@@ -108,7 +119,22 @@ impl Drawable for ActionsMenu {
         target: &mut dyn sfml::graphics::RenderTarget,
         states: &sfml::graphics::RenderStates<'texture, 'shader, 'shader_texture>,
     ) {
+        let font =
+            Font::from_file("/usr/share/fonts/TTF/DejaVuSans.ttf").expect("Error to load font");
+
         let mut render_states = states.clone();
+
+        // Draw owner name if any
+        if let Some(ref owner) = self.owner {
+            let owner_text = if *owner == self.player_name {
+                "Моё строение".to_string()
+            } else {
+                owner.clone()
+            };
+            let text = Text::new(&owner_text, &font, 16);
+            render_states.transform.translate(0.0, ACTION_SIZE as f32);
+            target.draw_with_renderstates(&text, &render_states);
+        }
 
         self.actions.iter().for_each(|action| {
             render_states.transform.translate(0.0, ACTION_SIZE as f32);

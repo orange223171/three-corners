@@ -28,7 +28,7 @@ mod texture_pack;
 #[tokio::main]
 async fn main() {
     let auth_window = AuthWindow::new().await;
-    let connection = match auth_window.run().await {
+    let (connection, player_name) = match auth_window.run().await {
         Some(c) => c,
         None => return,
     };
@@ -37,7 +37,7 @@ async fn main() {
 
     let players_states_box = PlayersStatesBox::new(players_states_mutex.clone());
     let board_box = BoardBox::new(board_mutex.clone(), texture_pack);
-    let mut actions_menu = ActionsMenu::new();
+    let mut actions_menu = ActionsMenu::new(player_name.clone());
 
     tokio::spawn(handle_message_loop(
         board_mutex.clone(),
@@ -55,6 +55,7 @@ async fn main() {
                 players_states_mutex.clone(),
                 &mut actions_menu,
                 connection.sender.clone(),
+                &player_name,
             )
             .await;
         }
@@ -118,6 +119,7 @@ async fn handler_sfml_event(
     players_states: Arc<Mutex<HashMap<String, PlayerState>>>,
     actions_menu: &mut ActionsMenu,
     sender: mpsc::Sender<Message>,
+    player_name: &str,
 ) {
     match event {
         Event::Closed => window.close(),
@@ -171,6 +173,9 @@ async fn handler_sfml_event(
                     if let Ok(triangle) = board.triangle(location) {
                         match triangle {
                             Some(building) => {
+                                let is_own = building.player == player_name;
+                                actions_menu.set_owner(Some(building.player.clone()));
+
                                 actions_menu.add(Action::Destroy(
                                     board
                                         .kit()
@@ -179,14 +184,16 @@ async fn handler_sfml_event(
                                         .expect("fail to found building in kit")
                                         .base_destroy_price,
                                 ));
-                                actions_menu.add(Action::Grab(
-                                    board
-                                        .kit()
-                                        .building_kit()
-                                        .get(&building.name)
-                                        .expect("fail to found building in kit")
-                                        .base_grab_price,
-                                ))
+                                if !is_own {
+                                    actions_menu.add(Action::Grab(
+                                        board
+                                            .kit()
+                                            .building_kit()
+                                            .get(&building.name)
+                                            .expect("fail to found building in kit")
+                                            .base_grab_price,
+                                    ));
+                                }
                             }
                             None => board.kit().building_kit().iter().for_each(|building| {
                                 actions_menu.add(Action::Build(

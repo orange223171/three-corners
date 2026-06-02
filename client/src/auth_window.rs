@@ -150,8 +150,8 @@ impl AuthWindow {
     }
 
     /// Runs the authentication event loop.
-    /// Returns `Some(Connection)` on successful auth, `None` if window was closed.
-    pub async fn run(mut self) -> Option<Connection> {
+    /// Returns `Some((Connection, player_name))` on successful auth, `None` if window was closed.
+    pub async fn run(mut self) -> Option<(Connection, String)> {
         let font =
             Font::from_file("/usr/share/fonts/TTF/DejaVuSans.ttf").expect("Error to load font");
 
@@ -168,7 +168,7 @@ impl AuthWindow {
             // Stop if done
             if self.stage == AuthStage::Done {
                 self.window.close();
-                return Some(self.connection);
+                return Some((self.connection, self.player_name));
             }
 
             // Handle SFML events
