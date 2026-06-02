@@ -1,15 +1,7 @@
-use std::{
-    collections::HashMap,
-    net::{IpAddr, Ipv4Addr, SocketAddr},
-    sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
 use core_3c::{board::Board, kit::Kit, player_state::PlayerState, vector::Vector};
-use network_client::connection::Connection;
-use network_core::{
-    bytes_represented::{log_in_message::LogInMessage, sign_up_message::SignUpMessage},
-    message::Message,
-};
+use network_core::message::Message;
 use sfml::{
     cpp::FBox,
     graphics::{Color, RenderStates, RenderTarget, RenderWindow},
@@ -19,19 +11,28 @@ use tokio::sync::{Mutex, mpsc};
 
 use crate::{
     actions_menu::{Action, ActionsMenu},
+    auth_window::AuthWindow,
     board_box::BoardBox,
     players_states_box::PlayersStatesBox,
     texture_pack::TexturePack,
 };
 
 mod actions_menu;
+mod auth_window;
 mod board_box;
+mod button;
+mod input_field;
 mod players_states_box;
 mod texture_pack;
 
 #[tokio::main]
 async fn main() {
-    let (mut window, board_mutex, players_states_mutex, connection, texture_pack) = init().await;
+    // Phase 1: Authentication (RAII window, closes when done)
+    let auth_window = AuthWindow::new().await;
+    let connection = auth_window.run().await;
+
+    // Phase 2: Game
+    let (mut window, board_mutex, players_states_mutex, texture_pack) = init().await;
 
     let players_states_box = PlayersStatesBox::new(players_states_mutex.clone());
     let board_box = BoardBox::new(board_mutex.clone(), texture_pack);
@@ -43,62 +44,6 @@ async fn main() {
         connection.reciever,
         connection.sender.clone(),
     ));
-
-    loop {
-        let mut action = String::new();
-        std::io::stdin()
-            .read_line(&mut action)
-            .expect("fail to read action");
-        let action = action.trim();
-
-        if action == "sign up" {
-            let mut player = String::new();
-            std::io::stdin()
-                .read_line(&mut player)
-                .expect("fail to read player's name");
-            let player = player.trim().to_string();
-
-            let mut password = String::new();
-            std::io::stdin()
-                .read_line(&mut password)
-                .expect("fail to read password");
-            let password = password.trim().to_string();
-
-            connection
-                .sender
-                .send(Message::SignUp(SignUpMessage {
-                    player: player,
-                    password: password,
-                }))
-                .await
-                .unwrap();
-        }
-
-        if action == "log in" {
-            let mut player = String::new();
-            std::io::stdin()
-                .read_line(&mut player)
-                .expect("fail to read player's name");
-            let player = player.trim().to_string();
-
-            let mut password = String::new();
-            std::io::stdin()
-                .read_line(&mut password)
-                .expect("fail to read password");
-            let password = password.trim().to_string();
-
-            connection
-                .sender
-                .send(Message::LogIn(LogInMessage {
-                    player: player,
-                    password: password,
-                }))
-                .await
-                .unwrap();
-
-            break;
-        }
-    }
 
     while window.is_open() {
         while let Some(event) = window.poll_event() {
@@ -121,7 +66,6 @@ async fn init() -> (
     FBox<RenderWindow>,
     Arc<Mutex<Board>>,
     Arc<Mutex<HashMap<String, PlayerState>>>,
-    Connection,
     TexturePack,
 ) {
     let window = RenderWindow::new(
@@ -139,14 +83,7 @@ async fn init() -> (
     let board = Arc::new(Mutex::new(Board::new(Vector { x: 11, y: 10 }, kit)));
     let players_states = Arc::new(Mutex::new(HashMap::new()));
 
-    let connection = Connection::init(
-        &SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 23171),
-        "localhost",
-    )
-    .await
-    .expect("Error to connect to server");
-
-    (window, board, players_states, connection, texture_pack)
+    (window, board, players_states, texture_pack)
 }
 
 fn draw(
@@ -317,6 +254,11 @@ async fn handler_message(
         Message::VersionResponce(version_responce_message) => (),
         Message::LogIn(_) => (),
         Message::SignUp(_) => (),
+        Message::TotpRequest => (),
+        Message::TotpResponce(_) => (),
+        Message::Add2faRequest => (),
+        Message::Add2faResponce(_) => (),
+        Message::Remove2fa => (),
         Message::Build(_) => (),
         Message::Destroy(_) => (),
         Message::Grab(_) => (),
