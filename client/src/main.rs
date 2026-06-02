@@ -28,7 +28,10 @@ mod texture_pack;
 #[tokio::main]
 async fn main() {
     let auth_window = AuthWindow::new().await;
-    let connection = auth_window.run().await;
+    let connection = match auth_window.run().await {
+        Some(c) => c,
+        None => return,
+    };
 
     let (mut window, board_mutex, players_states_mutex, texture_pack) = init().await;
 
