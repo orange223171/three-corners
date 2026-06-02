@@ -110,16 +110,7 @@ pub async fn log_in_message_handler(
 
     players_list.insert(socket.clone(), message.player.clone());
 
-    let messages = game.get_info();
-    for message in messages {
-        connections_list
-            .get(&socket)
-            .expect("Not found sender")
-            .send(message)
-            .await
-            .unwrap();
-    }
-
+    // Send LogInSuccessful first so the client transitions to game loop
     connections_list
         .get(&socket)
         .expect("Not found sender")
@@ -252,16 +243,6 @@ pub async fn totp_responce_message_handler(
         unauthorized_players_list.remove(socket);
         players_list.insert(socket.clone(), user.clone());
 
-        let messages = game.get_info();
-        for message in messages {
-            connections_list
-                .get(&socket)
-                .expect("Not found sender")
-                .send(message)
-                .await
-                .unwrap();
-        }
-
         connections_list
             .get(&socket)
             .expect("Not found sender")
@@ -346,6 +327,22 @@ pub async fn remove_2fa_message_handler(
         .send(Message::Ok)
         .await
         .unwrap();
+}
+
+pub async fn game_data_request_message_handler(
+    socket: &SocketAddr,
+    connections_list: &HashMap<SocketAddr, mpsc::Sender<Message>>,
+    game: &Game,
+) {
+    let messages = game.get_info();
+    for message in messages {
+        connections_list
+            .get(socket)
+            .expect("Not found sender")
+            .send(message)
+            .await
+            .unwrap();
+    }
 }
 
 pub async fn build_message_handler(

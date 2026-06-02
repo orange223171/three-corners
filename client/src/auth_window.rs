@@ -585,7 +585,8 @@ impl AuthWindow {
             | Message::Destroy(_)
             | Message::Grab(_)
             | Message::SetTriangle(_)
-            | Message::PlayerState(_) => {
+            | Message::PlayerState(_)
+            | Message::GameDataRequest => {
                 // Ignore non-auth messages during auth phase
             }
         }

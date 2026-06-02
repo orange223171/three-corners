@@ -46,6 +46,13 @@ async fn main() {
         connection.sender.clone(),
     ));
 
+    // Request current game state from server
+    connection
+        .sender
+        .send(Message::GameDataRequest)
+        .await
+        .unwrap();
+
     while window.is_open() {
         while let Some(event) = window.poll_event() {
             handler_sfml_event(
@@ -285,5 +292,6 @@ async fn handler_message(
                 .await
                 .insert(player_state_message.player, player_state_message.state);
         }
+        Message::GameDataRequest => {}
     }
 }

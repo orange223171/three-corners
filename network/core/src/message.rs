@@ -36,6 +36,7 @@ const GRAB_MESSAGE: u32 = 34;
 
 const SET_TRIANGLE_MESSAGE: u32 = 64;
 const PLAYER_STATE_MESSAGE: u32 = 65;
+const GAME_DATA_REQUEST_MESSAGE: u32 = 66;
 
 /// A network message
 #[derive(Debug, Clone)]
@@ -65,6 +66,7 @@ pub enum Message {
 
     SetTriangle(SetTriangleMessage),
     PlayerState(PlayerStateMessage),
+    GameDataRequest,
 }
 
 impl Message {
@@ -138,6 +140,9 @@ impl Message {
                 v.append(&mut PLAYER_STATE_MESSAGE.encode());
                 v.append(&mut player_state_message.encode());
             }
+            Message::GameDataRequest => {
+                v.append(&mut GAME_DATA_REQUEST_MESSAGE.encode());
+            }
         }
 
         v.append(&mut vec![0; 8192 - v.len()]);
@@ -194,6 +199,7 @@ impl Message {
                 &mut decoder,
                 bytes,
             )?)),
+            GAME_DATA_REQUEST_MESSAGE => Result::Ok(Message::GameDataRequest),
 
             _ => Result::Err(Error::UncorrectFormat(
                 String::from("Message"),

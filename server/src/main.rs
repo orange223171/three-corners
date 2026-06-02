@@ -20,9 +20,9 @@ use totp_rs::Secret;
 
 use crate::message_handlers::{
     add_2fa_request_message_handler, build_message_handler, destroy_message_handler,
-    error_message_handler, grab_message_handler, log_in_message_handler,
-    player_state_message_handler, remove_2fa_message_handler, set_triangle_message_handler,
-    sign_up_message_handler, totp_responce_message_handler,
+    error_message_handler, game_data_request_message_handler, grab_message_handler,
+    log_in_message_handler, player_state_message_handler, remove_2fa_message_handler,
+    set_triangle_message_handler, sign_up_message_handler, totp_responce_message_handler,
 };
 
 mod message_handlers;
@@ -165,5 +165,8 @@ async fn message_handler(
         }
         Message::SetTriangle(_) => set_triangle_message_handler(socket, connections_list).await,
         Message::PlayerState(_) => player_state_message_handler(socket, connections_list).await,
+        Message::GameDataRequest => {
+            game_data_request_message_handler(socket, connections_list, game).await
+        }
     }
 }
