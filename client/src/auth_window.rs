@@ -10,10 +10,12 @@ use network_core::{
     },
     message::Message,
 };
+use qrcode::QrCode;
 use sfml::{
     cpp::FBox,
     graphics::{
-        Color, Drawable, Font, RenderStates, RenderTarget, RenderWindow, Text, Transformable,
+        Color, Drawable, Font, RenderStates, RenderTarget, RenderWindow, Sprite, Text, Texture,
+        Transformable,
     },
     system::Clock,
     window::{Event, Style, VideoMode, mouse::Button as SfButton},
@@ -75,6 +77,8 @@ pub struct AuthWindow {
     stage: AuthStage,
     error_text: String,
     info_text: String,
+    player_name: String,
+    qr_texture: Option<(FBox<Texture>, u32)>,
 }
 
 impl AuthWindow {
@@ -82,7 +86,7 @@ impl AuthWindow {
     /// Uses RAII: window resources are freed on drop.
     pub async fn new() -> Self {
         let window = RenderWindow::new(
-            VideoMode::new(500, 420, 32),
+            VideoMode::new(500, 500, 32),
             "three corners — authentication",
             Style::TITLEBAR | Style::CLOSE,
             &sfml::window::ContextSettings::default(),
@@ -115,7 +119,7 @@ impl AuthWindow {
         let submit_button = Button::new("Submit", (175.0, 220.0), (button_w, button_h));
         let toggle_mode_button = Button::new("Sign Up", (175.0, 270.0), (button_w, button_h));
         let submit_totp_button = Button::new("Submit TOTP", (175.0, 240.0), (button_w, button_h));
-        let confirm_add2fa_button = Button::new("I saved it", (155.0, 300.0), (190.0, button_h));
+        let confirm_add2fa_button = Button::new("I saved it", (155.0, 340.0), (190.0, button_h));
         let back_button = Button::new("Back", (175.0, 340.0), (button_w, button_h));
         let continue_button = Button::new("Continue", (155.0, 280.0), (190.0, button_h));
         let add_totp_button = Button::new("Add TOTP", (175.0, 180.0), (button_w, button_h));
@@ -140,6 +144,8 @@ impl AuthWindow {
             stage: AuthStage::Credentials,
             error_text: String::new(),
             info_text: String::new(),
+            player_name: String::new(),
+            qr_texture: None,
         }
     }
 
@@ -282,9 +288,10 @@ impl AuthWindow {
                     }
 
                     AuthStage::Add2fa { .. } => {
-                        if self.confirm_add2fa_button.contains(x, y) {
-                            // User confirmed they saved the secret → back to LoggedIn
+                        let (bx, by, bw, bh) = self.add2fa_button_rect();
+                        if x >= bx && x <= bx + bw && y >= by && y <= by + bh {
                             self.stage = AuthStage::LoggedIn;
+                            self.qr_texture = None;
                             self.clear_notifications();
                         }
                     }
@@ -321,8 +328,9 @@ impl AuthWindow {
                             .set_hovered(self.back_button.contains(x, y));
                     }
                     AuthStage::Add2fa { .. } => {
-                        self.confirm_add2fa_button
-                            .set_hovered(self.confirm_add2fa_button.contains(x, y));
+                        let (bx, by, bw, bh) = self.add2fa_button_rect();
+                        let hov = x >= bx && x <= bx + bw && y >= by && y <= by + bh;
+                        self.confirm_add2fa_button.set_hovered(hov);
                     }
                     AuthStage::LoggedIn => {
                         self.add_totp_button
@@ -338,6 +346,16 @@ impl AuthWindow {
 
             _ => {}
         }
+    }
+
+    fn add2fa_button_rect(&self) -> (f32, f32, f32, f32) {
+        let qr_bottom = self
+            .qr_texture
+            .as_ref()
+            .map(|(_, px)| 90.0 + *px as f32)
+            .unwrap_or(90.0);
+        let y = qr_bottom + 16.0;
+        (155.0, y, 190.0, 36.0)
     }
 
     fn toggle_mode(&mut self) {
@@ -365,6 +383,7 @@ impl AuthWindow {
                     return;
                 }
 
+                self.player_name = player.clone();
                 self.clear_notifications();
 
                 match self.mode {
@@ -431,6 +450,55 @@ impl AuthWindow {
         });
     }
 
+    fn generate_qr(&mut self, secret: &str) {
+        // Normalize: uppercase, strip padding (base32 decodes fine without =)
+        let secret = secret.to_uppercase().trim_end_matches('=').to_string();
+
+        // Build proper otpauth URL
+        let issuer = "ThreeCorners";
+        let issuer_enc = issuer.replace(':', "%3A").replace(' ', "%20");
+        let account_enc = self.player_name.replace(':', "%3A").replace(' ', "%20");
+        let url = format!(
+            "otpauth://totp/{issuer}:{account}?secret={secret}&issuer={issuer}",
+            issuer = issuer_enc,
+            account = account_enc,
+            secret = secret,
+        );
+
+        let code = QrCode::new(&url).expect("Failed to generate QR code");
+        let size = code.width();
+        let module_px = 4u32;
+        let img_px = size as u32 * module_px;
+
+        let mut pixels = vec![0u8; (img_px * img_px * 4) as usize];
+        for y in 0..size {
+            for x in 0..size {
+                let dark = code[(x, y)] == qrcode::Color::Dark;
+                let color: [u8; 4] = if dark {
+                    [0, 0, 0, 255]
+                } else {
+                    [255, 255, 255, 255]
+                };
+                for dy in 0..module_px {
+                    for dx in 0..module_px {
+                        let px = x as u32 * module_px + dx;
+                        let py = y as u32 * module_px + dy;
+                        let idx = ((py * img_px + px) * 4) as usize;
+                        pixels[idx..idx + 4].copy_from_slice(&color);
+                    }
+                }
+            }
+        }
+
+        let mut texture = Texture::new().expect("Failed to create QR texture");
+        texture
+            .create(img_px, img_px)
+            .expect("Failed to init QR texture size");
+        texture.update_from_pixels(&pixels, img_px, img_px, 0, 0);
+
+        self.qr_texture = Some((texture, img_px));
+    }
+
     /// Poll messages from the server without blocking
     async fn poll_messages(&mut self) {
         loop {
@@ -458,6 +526,7 @@ impl AuthWindow {
                 self.mode = AuthMode::Login;
                 self.login_field.clear();
                 self.password_field.clear();
+                self.qr_texture = None;
                 self.clear_notifications();
                 self.info_text = "Sign up successful! Please log in.".to_string();
             }
@@ -498,10 +567,8 @@ impl AuthWindow {
                     secret: add2fa.secret.clone(),
                 };
                 self.clear_notifications();
-                self.info_text = format!(
-                    "Your 2FA secret: {}\nSave it in your authenticator app!",
-                    add2fa.secret
-                );
+                self.generate_qr(&add2fa.secret);
+                self.info_text = "Scan the QR code with your authenticator app.".to_string();
             }
 
             Message::VersionResponce(_)
@@ -574,12 +641,26 @@ impl AuthWindow {
 
             AuthStage::Add2fa { .. } => {
                 let mut info = Text::new(&self.info_text, font, 14);
-                info.set_fill_color(Color::rgb(180, 40, 40));
-                info.set_position((50.0, 80.0));
+                info.set_fill_color(Color::rgb(50, 50, 80));
+                info.set_position((50.0, 60.0));
                 self.window.draw(&info);
 
-                let confirm = self.button_with_label(&self.confirm_add2fa_button, "I saved it");
-                self.window.draw(&confirm);
+                // Draw QR code
+                if let Some((ref texture, img_px)) = self.qr_texture {
+                    let mut sprite = Sprite::with_texture(texture);
+                    let qr_x = (self.window.size().x as f32 - img_px as f32) / 2.0;
+                    sprite.set_position((qr_x, 90.0));
+                    self.window.draw(&sprite);
+                }
+
+                // Draw the confirm button right below the QR code
+                let (bx, by, bw, bh) = self.add2fa_button_rect();
+                self.draw_button_at(
+                    "I saved it",
+                    (bx, by),
+                    (bw, bh),
+                    self.confirm_add2fa_button.hovered(),
+                );
             }
 
             AuthStage::LoggedIn => {
@@ -612,7 +693,12 @@ impl AuthWindow {
         if !self.error_text.is_empty() {
             let mut error = Text::new(&self.error_text, font, 14);
             error.set_fill_color(Color::rgb(200, 40, 40));
-            error.set_position((90.0, 350.0));
+            let y = if matches!(self.stage, AuthStage::Add2fa { .. }) {
+                self.add2fa_button_rect().1 + 46.0
+            } else {
+                350.0
+            };
+            error.set_position((90.0, y));
             self.window.draw(&error);
         }
 
@@ -625,6 +711,40 @@ impl AuthWindow {
         }
 
         self.window.display();
+    }
+
+    fn draw_button_at(
+        &mut self,
+        label: &str,
+        (x, y): (f32, f32),
+        (w, h): (f32, f32),
+        hovered: bool,
+    ) {
+        use sfml::graphics::{RectangleShape, Shape};
+
+        let mut bg = RectangleShape::new();
+        bg.set_position((x, y));
+        bg.set_size((w, h));
+        if hovered {
+            bg.set_fill_color(Color::rgb(90, 140, 220));
+            bg.set_outline_color(Color::rgb(60, 100, 180));
+        } else {
+            bg.set_fill_color(Color::rgb(70, 120, 200));
+            bg.set_outline_color(Color::rgb(50, 90, 160));
+        }
+        bg.set_outline_thickness(2.0);
+        self.window.draw(&bg);
+
+        let font =
+            Font::from_file("/usr/share/fonts/TTF/DejaVuSans.ttf").expect("Error to load font");
+        let mut text = Text::new(label, &font, 18);
+        text.set_fill_color(Color::WHITE);
+        let bounds = text.local_bounds();
+        text.set_position((
+            x + (w - bounds.width) / 2.0,
+            y + (h - bounds.height) / 2.0 - 4.0,
+        ));
+        self.window.draw(&text);
     }
 
     /// Helper to create a Text-based button with a dynamic label.

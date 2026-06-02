@@ -77,8 +77,8 @@ impl Db {
             .await?
             .first()
         {
-            Some(row) => match row.try_get(0) {
-                Ok(totp_secret) => Result::Ok(totp_secret),
+            Some(row) => match row.try_get::<_, String>(0) {
+                Ok(totp_secret) => Result::Ok(Some(totp_secret.trim().to_string())),
                 Err(_) => Result::Ok(None),
             },
             None => Result::Ok(None),
@@ -101,7 +101,7 @@ impl Db {
     pub async fn add_2fa(&mut self, user: String, totp_secret: String) -> Result<(), Error> {
         self.postresql_client
             .execute(
-                "UPDATE users SET totp_secret = $1 WHERE user = $2",
+                "UPDATE users SET totp_secret = $1 WHERE user_name = $2",
                 &[&totp_secret, &user],
             )
             .await?;
@@ -113,7 +113,7 @@ impl Db {
     pub async fn remove_2fa(&mut self, user: String) -> Result<(), Error> {
         self.postresql_client
             .execute(
-                "UPDATE users SET totp_secret = NULL WHERE user = $1",
+                "UPDATE users SET totp_secret = NULL WHERE user_name = $1",
                 &[&user],
             )
             .await?;

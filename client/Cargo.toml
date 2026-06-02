@@ -11,3 +11,4 @@ network_client = { workspace = true }
 tokio = { workspace = true }
 
 sfml = { workspace = true }
+qrcode = "0.14"

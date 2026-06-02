@@ -50,35 +50,6 @@ pub async fn log_in_message_handler(
             if !bcrypt::verify(message.password.clone(), hash.as_str())
                 .expect("Error to hash password")
             {
-                match db.get_totp_secret(message.player.clone()).await {
-                    Ok(totp_secret) => {
-                        if totp_secret.is_some() {
-                            unauthorized_players_list.insert(*socket, message.player.clone());
-
-                            connections_list
-                                .get(socket)
-                                .expect("Not found sender")
-                                .send(Message::TotpRequest)
-                                .await
-                                .unwrap();
-
-                            return;
-                        }
-                    }
-                    Err(_) => {
-                        connections_list
-                        .get(socket)
-                        .expect("Not found sender")
-                        .send(Message::Error(
-                            network_core::bytes_represented::error_message::ErrorMessage::FailToLogIn,
-                        ))
-                        .await
-                        .unwrap();
-
-                        return;
-                    }
-                }
-
                 connections_list
                     .get(socket)
                     .expect("Not found sender")
@@ -90,6 +61,38 @@ pub async fn log_in_message_handler(
 
                 return;
             }
+
+            // Password correct — check for TOTP
+            match db.get_totp_secret(message.player.clone()).await {
+                Ok(totp_secret) => {
+                    if totp_secret.is_some() {
+                        unauthorized_players_list.insert(*socket, message.player.clone());
+
+                        connections_list
+                            .get(socket)
+                            .expect("Not found sender")
+                            .send(Message::TotpRequest)
+                            .await
+                            .unwrap();
+
+                        return;
+                    }
+                }
+                Err(_) => {
+                    connections_list
+                        .get(socket)
+                        .expect("Not found sender")
+                        .send(Message::Error(
+                            network_core::bytes_represented::error_message::ErrorMessage::FailToLogIn,
+                        ))
+                        .await
+                        .unwrap();
+
+                    return;
+                }
+            }
+
+            // No TOTP — log in directly
         }
         Err(_) => {
             connections_list
@@ -225,14 +228,24 @@ pub async fn totp_responce_message_handler(
         }
     };
 
-    let totp = TOTP::new(
-        Algorithm::SHA1,
-        6,
-        1,
-        30,
-        Secret::Encoded(secret).to_bytes().unwrap(),
-    )
-    .unwrap();
+    let secret_bytes = match Secret::Encoded(secret.clone()).to_bytes() {
+        Ok(bytes) => bytes,
+        Err(_) => {
+            // Corrupted secret in DB — tell user to re-add 2FA
+            connections_list
+                .get(&socket)
+                .expect("Not found sender")
+                .send(Message::Error(
+                    network_core::bytes_represented::error_message::ErrorMessage::OperationDenied,
+                ))
+                .await
+                .unwrap();
+
+            return;
+        }
+    };
+
+    let totp = TOTP::new(Algorithm::SHA1, 6, 1, 30, secret_bytes).unwrap();
     let token = totp.generate_current().unwrap();
 
     if token == message.totp_code {
@@ -269,7 +282,7 @@ pub async fn add_2fa_request_message_handler(
     players_list: &mut HashMap<SocketAddr, String>,
     db: &mut Db,
 ) {
-    let secret = Secret::generate_secret().to_string();
+    let secret = Secret::generate_secret().to_encoded().to_string();
 
     let user = match players_list.get(&socket) {
         Some(user) => user.clone(),
@@ -287,7 +300,9 @@ pub async fn add_2fa_request_message_handler(
         }
     };
 
-    db.add_2fa(user, secret.clone());
+    db.add_2fa(user, secret.clone())
+        .await
+        .expect("Error to access db");
 
     connections_list
         .get(&socket)
@@ -321,7 +336,16 @@ pub async fn remove_2fa_message_handler(
         }
     };
 
-    db.remove_2fa(user);
+    db.remove_2fa(user.clone())
+        .await
+        .expect("Error to access db");
+
+    connections_list
+        .get(&socket)
+        .expect("Not found sender")
+        .send(Message::Ok)
+        .await
+        .unwrap();
 }
 
 pub async fn build_message_handler(
