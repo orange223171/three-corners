@@ -37,10 +37,10 @@ enum AuthStage {
     Credentials,
     /// TOTP code required (after login for 2FA-enabled accounts)
     Totp,
-    /// Showing 2FA secret (after signup — user should save this)
+    /// Showing 2FA secret (after signup or adding 2FA)
     Add2fa { secret: String },
-    /// Auth succeeded — show Continue button to proceed
-    Authenticated,
+    /// Logged in — show Add/Remove TOTP + Continue
+    LoggedIn,
     /// Authentication complete — window will close
     Done,
 }
@@ -67,6 +67,8 @@ pub struct AuthWindow {
     confirm_add2fa_button: Button,
     back_button: Button,
     continue_button: Button,
+    add_totp_button: Button,
+    remove_totp_button: Button,
 
     // State
     mode: AuthMode,
@@ -116,6 +118,8 @@ impl AuthWindow {
         let confirm_add2fa_button = Button::new("I saved it", (155.0, 300.0), (190.0, button_h));
         let back_button = Button::new("Back", (175.0, 340.0), (button_w, button_h));
         let continue_button = Button::new("Continue", (155.0, 280.0), (190.0, button_h));
+        let add_totp_button = Button::new("Add TOTP", (175.0, 180.0), (button_w, button_h));
+        let remove_totp_button = Button::new("Remove TOTP", (175.0, 230.0), (button_w, button_h));
 
         Self {
             window,
@@ -130,6 +134,8 @@ impl AuthWindow {
             confirm_add2fa_button,
             back_button,
             continue_button,
+            add_totp_button,
+            remove_totp_button,
             mode: AuthMode::Login,
             stage: AuthStage::Credentials,
             error_text: String::new(),
@@ -190,7 +196,7 @@ impl AuthWindow {
                 AuthStage::Totp => {
                     self.totp_field.handle_text_entered(unicode);
                 }
-                AuthStage::Authenticated | AuthStage::Done => {}
+                AuthStage::LoggedIn | AuthStage::Done => {}
             },
 
             Event::KeyPressed { code, .. } => {
@@ -204,7 +210,7 @@ impl AuthWindow {
                         AuthStage::Totp => {
                             self.totp_field.handle_backspace();
                         }
-                        AuthStage::Authenticated | AuthStage::Done => {}
+                        AuthStage::LoggedIn | AuthStage::Done => {}
                     },
                     Key::Tab => {
                         // Toggle focus between login and password fields
@@ -277,12 +283,19 @@ impl AuthWindow {
 
                     AuthStage::Add2fa { .. } => {
                         if self.confirm_add2fa_button.contains(x, y) {
-                            // User confirmed they saved the secret → show Continue
-                            self.stage = AuthStage::Authenticated;
+                            // User confirmed they saved the secret → back to LoggedIn
+                            self.stage = AuthStage::LoggedIn;
+                            self.info_text.clear();
                         }
                     }
 
-                    AuthStage::Authenticated => {
+                    AuthStage::LoggedIn => {
+                        if self.add_totp_button.contains(x, y) {
+                            self.send_add2fa_request();
+                        }
+                        if self.remove_totp_button.contains(x, y) {
+                            self.send_remove2fa();
+                        }
                         if self.continue_button.contains(x, y) {
                             self.stage = AuthStage::Done;
                         }
@@ -311,7 +324,11 @@ impl AuthWindow {
                         self.confirm_add2fa_button
                             .set_hovered(self.confirm_add2fa_button.contains(x, y));
                     }
-                    AuthStage::Authenticated => {
+                    AuthStage::LoggedIn => {
+                        self.add_totp_button
+                            .set_hovered(self.add_totp_button.contains(x, y));
+                        self.remove_totp_button
+                            .set_hovered(self.remove_totp_button.contains(x, y));
                         self.continue_button
                             .set_hovered(self.continue_button.contains(x, y));
                     }
@@ -386,8 +403,26 @@ impl AuthWindow {
                 });
             }
 
-            AuthStage::Add2fa { .. } | AuthStage::Authenticated | AuthStage::Done => {}
+            AuthStage::Add2fa { .. } | AuthStage::LoggedIn | AuthStage::Done => {}
         }
+    }
+
+    fn send_add2fa_request(&mut self) {
+        self.error_text.clear();
+        self.info_text = "Requesting 2FA setup...".to_string();
+        let sender = self.connection.sender.clone();
+        tokio::spawn(async move {
+            sender.send(Message::Add2faRequest).await.unwrap();
+        });
+    }
+
+    fn send_remove2fa(&mut self) {
+        self.error_text.clear();
+        self.info_text = "Removing TOTP...".to_string();
+        let sender = self.connection.sender.clone();
+        tokio::spawn(async move {
+            sender.send(Message::Remove2fa).await.unwrap();
+        });
     }
 
     /// Poll messages from the server without blocking
@@ -406,19 +441,28 @@ impl AuthWindow {
 
     fn handle_server_message(&mut self, message: Message) {
         match message {
+            Message::LogInSuccessful => {
+                self.stage = AuthStage::LoggedIn;
+                self.info_text = "Logged in!".to_string();
+            }
+
+            Message::SignUpSuccessful => {
+                self.stage = AuthStage::Credentials;
+                self.mode = AuthMode::Login;
+                self.login_field.clear();
+                self.password_field.clear();
+                self.info_text = "Sign up successful! Please log in.".to_string();
+            }
+
             Message::Ok => match &self.stage {
-                AuthStage::Credentials => {
-                    // Login or signup succeeded → show Continue
-                    self.stage = AuthStage::Authenticated;
+                AuthStage::LoggedIn => {
+                    // TOTP removed successfully
+                    self.info_text = "TOTP removed.".to_string();
                 }
                 AuthStage::Totp => {
-                    // TOTP code accepted → show Continue
-                    self.stage = AuthStage::Authenticated;
+                    self.stage = AuthStage::LoggedIn;
                 }
-                AuthStage::Add2fa { .. } => {
-                    self.stage = AuthStage::Authenticated;
-                }
-                AuthStage::Authenticated | AuthStage::Done => {}
+                AuthStage::Add2fa { .. } | AuthStage::Credentials | AuthStage::Done => {}
             },
 
             Message::Error(error_message) => {
@@ -491,7 +535,6 @@ impl AuthWindow {
                     AuthMode::Login => "Log In",
                     AuthMode::SignUp => "Sign Up",
                 };
-                // We need to rebuild the button with the correct label
                 let submit = self.button_with_label(&self.submit_button, submit_label);
                 self.window.draw(&submit);
 
@@ -529,11 +572,24 @@ impl AuthWindow {
                 self.window.draw(&confirm);
             }
 
-            AuthStage::Authenticated => {
-                let mut msg = Text::new("Authentication successful!", font, 22);
+            AuthStage::LoggedIn => {
+                let mut msg = Text::new("Logged in!", font, 22);
                 msg.set_fill_color(Color::rgb(30, 120, 30));
-                msg.set_position((120.0, 100.0));
+                msg.set_position((190.0, 60.0));
                 self.window.draw(&msg);
+
+                if !self.info_text.is_empty() {
+                    let mut info = Text::new(&self.info_text, font, 14);
+                    info.set_fill_color(Color::rgb(50, 50, 80));
+                    info.set_position((90.0, 100.0));
+                    self.window.draw(&info);
+                }
+
+                let add_btn = self.button_with_label(&self.add_totp_button, "Add TOTP");
+                self.window.draw(&add_btn);
+
+                let remove_btn = self.button_with_label(&self.remove_totp_button, "Remove TOTP");
+                self.window.draw(&remove_btn);
 
                 let continue_btn = self.button_with_label(&self.continue_button, "Continue");
                 self.window.draw(&continue_btn);
@@ -548,6 +604,14 @@ impl AuthWindow {
             error.set_fill_color(Color::rgb(200, 40, 40));
             error.set_position((90.0, 370.0));
             self.window.draw(&error);
+        }
+
+        // Info text (non-error notifications)
+        if !self.info_text.is_empty() && self.stage == AuthStage::Credentials {
+            let mut info = Text::new(&self.info_text, font, 14);
+            info.set_fill_color(Color::rgb(30, 120, 30));
+            info.set_position((50.0, 370.0));
+            self.window.draw(&info);
         }
 
         self.window.display();

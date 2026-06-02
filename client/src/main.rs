@@ -254,6 +254,8 @@ async fn handler_message(
         Message::VersionResponce(version_responce_message) => (),
         Message::LogIn(_) => (),
         Message::SignUp(_) => (),
+        Message::LogInSuccessful => (),
+        Message::SignUpSuccessful => (),
         Message::TotpRequest => (),
         Message::TotpResponce(_) => (),
         Message::Add2faRequest => (),
