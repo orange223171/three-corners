@@ -26,8 +26,6 @@ mod message_handlers;
 
 #[tokio::main]
 async fn main() {
-    let secret = Secret::generate_secret();
-    println!("{}", secret.to_string());
     let mut connection = Connection::init(SocketAddr::new(
         IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
         23171,
@@ -36,6 +34,7 @@ async fn main() {
     let connections_list: Arc<Mutex<HashMap<SocketAddr, mpsc::Sender<Message>>>> =
         Arc::new(Mutex::new(HashMap::new()));
     let mut players_list: HashMap<SocketAddr, String> = HashMap::new();
+    let mut unauthoeized_player_list: HashMap<SocketAddr, String> = HashMap::new();
 
     let game = Arc::new(Mutex::new(Game::new()));
 
@@ -77,6 +76,7 @@ async fn main() {
                         &socket,
                         &*connections_list.lock().await,
                         &mut players_list,
+                        &mut unauthoeized_player_list,
                         &mut *game.lock().await,
                         &mut db,
                     )
@@ -93,6 +93,7 @@ async fn message_handler(
     socket: &SocketAddr,
     connections_list: &HashMap<SocketAddr, mpsc::Sender<Message>>,
     players_list: &mut HashMap<SocketAddr, String>,
+    unauthorized_players_list: &mut HashMap<SocketAddr, String>,
     game: &mut Game,
     db: &mut Db,
 ) {
@@ -112,6 +113,7 @@ async fn message_handler(
             )
             .await
         }
+
         Message::SignUp(sign_up_message) => {
             sign_up_message_handler(sign_up_message, socket, connections_list, db).await
         }

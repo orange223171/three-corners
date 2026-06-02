@@ -4,7 +4,7 @@ use crate::bytes_represented::BytesRepresented;
 
 #[derive(Debug, Clone)]
 pub struct Add2faResponceMessage {
-    secret: String,
+    pub secret: String,
 }
 
 impl BytesRepresented for Add2faResponceMessage {

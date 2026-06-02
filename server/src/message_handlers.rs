@@ -4,12 +4,15 @@ use db::Db;
 use logic_3c::game::Game;
 use network_core::{
     bytes_represented::{
-        build_message::BuildMessage, destroy_message::DestroyMessage, error_message::ErrorMessage,
-        grab_message::GrabMessage, log_in_message::LogInMessage, sign_up_message::SignUpMessage,
+        add_2fa_responce_message::Add2faResponceMessage, build_message::BuildMessage,
+        destroy_message::DestroyMessage, error_message::ErrorMessage, grab_message::GrabMessage,
+        log_in_message::LogInMessage, sign_up_message::SignUpMessage,
+        totp_responce_message::TotpResponceMessage,
     },
     message::Message,
 };
 use tokio::sync::mpsc;
+use totp_rs::{Algorithm, Secret, TOTP};
 
 /// Handles error message
 pub fn error_message_handler(message: ErrorMessage) {
@@ -22,6 +25,7 @@ pub async fn log_in_message_handler(
     socket: &SocketAddr,
     connections_list: &HashMap<SocketAddr, mpsc::Sender<Message>>,
     players_list: &mut HashMap<SocketAddr, String>,
+    unauthorized_players_list: &mut HashMap<SocketAddr, String>,
     game: &mut Game,
     db: &mut Db,
 ) {
@@ -49,7 +53,15 @@ pub async fn log_in_message_handler(
                 match db.get_totp_secret(message.player.clone()).await {
                     Ok(totp_secret) => {
                         if totp_secret.is_some() {
-                            todo!();
+                            unauthorized_players_list.insert(*socket, message.player.clone());
+
+                            connections_list
+                                .get(socket)
+                                .expect("Not found sender")
+                                .send(Message::TotpRequest)
+                                .await
+                                .unwrap();
+
                             return;
                         }
                     }
@@ -142,6 +154,153 @@ pub async fn sign_up_message_handler(
     db.add_user(message.player, hash)
         .await
         .expect("Error to access db");
+}
+
+pub async fn totp_responce_message_handler(
+    message: TotpResponceMessage,
+    socket: &SocketAddr,
+    connections_list: &HashMap<SocketAddr, mpsc::Sender<Message>>,
+    players_list: &mut HashMap<SocketAddr, String>,
+    unauthorized_players_list: &mut HashMap<SocketAddr, String>,
+    game: &mut Game,
+    db: &mut Db,
+) {
+    let user = match unauthorized_players_list.get(&socket) {
+        Some(user) => user.clone(),
+        None => {
+            connections_list
+                .get(&socket)
+                .expect("Not found sender")
+                .send(Message::Error(
+                    network_core::bytes_represented::error_message::ErrorMessage::OperationDenied,
+                ))
+                .await
+                .unwrap();
+
+            return;
+        }
+    };
+
+    let secret = match db.get_totp_secret(user.clone()).await {
+        Ok(secret) => match secret {
+            Some(secret) => secret,
+            None => {
+                connections_list
+                        .get(&socket)
+                        .expect("Not found sender")
+                        .send(Message::Error(
+                            network_core::bytes_represented::error_message::ErrorMessage::OperationDenied,
+                        ))
+                        .await
+                        .unwrap();
+
+                return;
+            }
+        },
+        Err(_) => {
+            connections_list
+                .get(&socket)
+                .expect("Not found sender")
+                .send(Message::Error(
+                    network_core::bytes_represented::error_message::ErrorMessage::OperationDenied,
+                ))
+                .await
+                .unwrap();
+
+            return;
+        }
+    };
+
+    let totp = TOTP::new(
+        Algorithm::SHA1,
+        6,
+        1,
+        30,
+        Secret::Encoded(secret).to_bytes().unwrap(),
+    )
+    .unwrap();
+    let token = totp.generate_current().unwrap();
+
+    if token == message.totp_code {
+        unauthorized_players_list.remove(socket);
+        players_list.insert(socket.clone(), user.clone());
+
+        let messages = game.get_info();
+        for message in messages {
+            connections_list
+                .get(&socket)
+                .expect("Not found sender")
+                .send(message)
+                .await
+                .unwrap();
+        }
+
+        let message = game.add_player(user);
+        for (_, sender) in connections_list {
+            sender.send(message.clone()).await.unwrap()
+        }
+    }
+}
+
+pub async fn add_2fa_request_message_handler(
+    socket: &SocketAddr,
+    connections_list: &HashMap<SocketAddr, mpsc::Sender<Message>>,
+    players_list: &mut HashMap<SocketAddr, String>,
+    db: &mut Db,
+) {
+    let secret = Secret::generate_secret().to_string();
+
+    let user = match players_list.get(&socket) {
+        Some(user) => user.clone(),
+        None => {
+            connections_list
+                .get(&socket)
+                .expect("Not found sender")
+                .send(Message::Error(
+                    network_core::bytes_represented::error_message::ErrorMessage::OperationDenied,
+                ))
+                .await
+                .unwrap();
+
+            return;
+        }
+    };
+
+    db.add_2fa(user, secret.clone());
+
+    connections_list
+        .get(&socket)
+        .expect("Not found sender")
+        .send(Message::Add2faResponce(Add2faResponceMessage {
+            secret: secret,
+        }))
+        .await
+        .unwrap()
+}
+
+pub async fn remove_2fa_message_handler(
+    socket: &SocketAddr,
+    connections_list: &HashMap<SocketAddr, mpsc::Sender<Message>>,
+    players_list: &mut HashMap<SocketAddr, String>,
+    db: &mut Db,
+) {
+    let user = match players_list.get(&socket) {
+        Some(user) => user.clone(),
+        None => {
+            connections_list
+                .get(&socket)
+                .expect("Not found sender")
+                .send(Message::Error(
+                    network_core::bytes_represented::error_message::ErrorMessage::OperationDenied,
+                ))
+                .await
+                .unwrap();
+
+            return;
+        }
+    };
+
+    db.remove_2fa(user);
 }
 
 pub async fn build_message_handler(
