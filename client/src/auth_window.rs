@@ -428,7 +428,10 @@ impl AuthWindow {
                 });
             }
 
-            AuthStage::Add2fa { .. } | AuthStage::LoggedIn | AuthStage::Done => {}
+            AuthStage::Add2fa { .. } | AuthStage::Done => {}
+            AuthStage::LoggedIn => {
+                self.stage = AuthStage::Done;
+            }
         }
     }
 
