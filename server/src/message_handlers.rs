@@ -117,6 +117,13 @@ pub async fn log_in_message_handler(
             .unwrap();
     }
 
+    connections_list
+        .get(&socket)
+        .expect("Not found sender")
+        .send(Message::LogInSuccessful)
+        .await
+        .unwrap();
+
     let message = game.add_player(message.player);
     for (_, sender) in connections_list {
         sender.send(message.clone()).await.unwrap()
@@ -154,6 +161,13 @@ pub async fn sign_up_message_handler(
     db.add_user(message.player, hash)
         .await
         .expect("Error to access db");
+
+    connections_list
+        .get(&socket)
+        .expect("Not found sender")
+        .send(Message::SignUpSuccessful)
+        .await
+        .unwrap();
 }
 
 pub async fn totp_responce_message_handler(
@@ -234,6 +248,13 @@ pub async fn totp_responce_message_handler(
                 .await
                 .unwrap();
         }
+
+        connections_list
+            .get(&socket)
+            .expect("Not found sender")
+            .send(Message::LogInSuccessful)
+            .await
+            .unwrap();
 
         let message = game.add_player(user);
         for (_, sender) in connections_list {

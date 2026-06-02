@@ -21,16 +21,18 @@ const VERSION_RESPONCE_MESSAGE: u32 = 3;
 const LOG_IN_MESSAGE: u32 = 8;
 const SIGN_UP_MESSAGE: u32 = 9;
 
-const TOTP_REQUEST_MESSAGE: u32 = 10;
-const TOTP_RESPONCE_MESSAGE: u32 = 11;
+const LOG_IN_SUCCESSFUL_MESSAGE: u32 = 10;
+const SIGN_UP_SUCCESSFUL_MESSAGE: u32 = 11;
 
-const ADD_2FA_REQUEST_MESSAGE: u32 = 12;
-const ADD_2FA_RESPONCE_MESSAGE: u32 = 13;
-const REMOVE_2FA_MESSAGE: u32 = 14;
+const TOTP_REQUEST_MESSAGE: u32 = 16;
+const TOTP_RESPONCE_MESSAGE: u32 = 17;
+const ADD_2FA_REQUEST_MESSAGE: u32 = 18;
+const ADD_2FA_RESPONCE_MESSAGE: u32 = 19;
+const REMOVE_2FA_MESSAGE: u32 = 20;
 
-const BUILD_MESSAGE: u32 = 16;
-const DESTROY_MESSAGE: u32 = 17;
-const GRAB_MESSAGE: u32 = 18;
+const BUILD_MESSAGE: u32 = 32;
+const DESTROY_MESSAGE: u32 = 33;
+const GRAB_MESSAGE: u32 = 34;
 
 const SET_TRIANGLE_MESSAGE: u32 = 64;
 const PLAYER_STATE_MESSAGE: u32 = 65;
@@ -43,6 +45,9 @@ pub enum Message {
 
     LogIn(LogInMessage),
     SignUp(SignUpMessage),
+
+    LogInSuccessful,
+    SignUpSuccessful,
 
     TotpRequest,
     TotpResponce(TotpResponceMessage),
@@ -80,6 +85,13 @@ impl Message {
             Message::SignUp(register_message) => {
                 v.append(&mut SIGN_UP_MESSAGE.encode());
                 v.append(&mut register_message.encode());
+            }
+
+            Message::LogInSuccessful => {
+                v.append(&mut LOG_IN_SUCCESSFUL_MESSAGE.encode());
+            }
+            Message::SignUpSuccessful => {
+                v.append(&mut SIGN_UP_SUCCESSFUL_MESSAGE.encode());
             }
 
             Message::TotpRequest => {
@@ -152,6 +164,9 @@ impl Message {
             SIGN_UP_MESSAGE => {
                 Result::Ok(Message::SignUp(SignUpMessage::decode(&mut decoder, bytes)?))
             }
+
+            LOG_IN_SUCCESSFUL_MESSAGE => Result::Ok(Message::LogInSuccessful),
+            SIGN_UP_SUCCESSFUL_MESSAGE => Result::Ok(Message::SignUpSuccessful),
 
             TOTP_REQUEST_MESSAGE => Result::Ok(Message::TotpRequest),
             TOTP_RESPONCE_MESSAGE => Result::Ok(Message::TotpResponce(

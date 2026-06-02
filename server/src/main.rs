@@ -122,6 +122,9 @@ async fn message_handler(
             sign_up_message_handler(sign_up_message, socket, connections_list, db).await
         }
 
+        Message::LogInSuccessful => (),
+        Message::SignUpSuccessful => (),
+
         Message::TotpRequest => (),
         Message::TotpResponce(totp_responce_message) => {
             totp_responce_message_handler(
