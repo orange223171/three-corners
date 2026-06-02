@@ -277,7 +277,7 @@ impl AuthWindow {
                         if self.back_button.contains(x, y) {
                             self.stage = AuthStage::Credentials;
                             self.totp_field.clear();
-                            self.error_text.clear();
+                            self.clear_notifications();
                         }
                     }
 
@@ -285,7 +285,7 @@ impl AuthWindow {
                         if self.confirm_add2fa_button.contains(x, y) {
                             // User confirmed they saved the secret → back to LoggedIn
                             self.stage = AuthStage::LoggedIn;
-                            self.info_text.clear();
+                            self.clear_notifications();
                         }
                     }
 
@@ -345,6 +345,10 @@ impl AuthWindow {
             AuthMode::Login => AuthMode::SignUp,
             AuthMode::SignUp => AuthMode::Login,
         };
+        self.clear_notifications();
+    }
+
+    fn clear_notifications(&mut self) {
         self.error_text.clear();
         self.info_text.clear();
     }
@@ -356,11 +360,12 @@ impl AuthWindow {
                 let password = self.password_field.content().to_string();
 
                 if player.is_empty() || password.is_empty() {
+                    self.info_text.clear();
                     self.error_text = "Both fields are required.".to_string();
                     return;
                 }
 
-                self.error_text.clear();
+                self.clear_notifications();
 
                 match self.mode {
                     AuthMode::Login => {
@@ -387,10 +392,11 @@ impl AuthWindow {
             AuthStage::Totp => {
                 let code = self.totp_field.content().to_string();
                 if code.is_empty() {
+                    self.info_text.clear();
                     self.error_text = "Enter TOTP code.".to_string();
                     return;
                 }
-                self.error_text.clear();
+                self.clear_notifications();
 
                 let sender = self.connection.sender.clone();
                 tokio::spawn(async move {
@@ -408,7 +414,7 @@ impl AuthWindow {
     }
 
     fn send_add2fa_request(&mut self) {
-        self.error_text.clear();
+        self.clear_notifications();
         self.info_text = "Requesting 2FA setup...".to_string();
         let sender = self.connection.sender.clone();
         tokio::spawn(async move {
@@ -417,7 +423,7 @@ impl AuthWindow {
     }
 
     fn send_remove2fa(&mut self) {
-        self.error_text.clear();
+        self.clear_notifications();
         self.info_text = "Removing TOTP...".to_string();
         let sender = self.connection.sender.clone();
         tokio::spawn(async move {
@@ -443,6 +449,7 @@ impl AuthWindow {
         match message {
             Message::LogInSuccessful => {
                 self.stage = AuthStage::LoggedIn;
+                self.clear_notifications();
                 self.info_text = "Logged in!".to_string();
             }
 
@@ -451,22 +458,25 @@ impl AuthWindow {
                 self.mode = AuthMode::Login;
                 self.login_field.clear();
                 self.password_field.clear();
+                self.clear_notifications();
                 self.info_text = "Sign up successful! Please log in.".to_string();
             }
 
             Message::Ok => match &self.stage {
                 AuthStage::LoggedIn => {
-                    // TOTP removed successfully
+                    self.error_text.clear();
                     self.info_text = "TOTP removed.".to_string();
                 }
                 AuthStage::Totp => {
                     self.stage = AuthStage::LoggedIn;
+                    self.clear_notifications();
                 }
                 AuthStage::Add2fa { .. } | AuthStage::Credentials | AuthStage::Done => {}
             },
 
             Message::Error(error_message) => {
                 use network_core::bytes_represented::error_message::ErrorMessage;
+                self.info_text.clear();
                 self.error_text = match error_message {
                     ErrorMessage::FailToLogIn => "Failed to log in. Check credentials.",
                     ErrorMessage::FailToSignUp => "Failed to sign up. Name may be taken.",
@@ -478,7 +488,7 @@ impl AuthWindow {
 
             Message::TotpRequest => {
                 self.stage = AuthStage::Totp;
-                self.error_text.clear();
+                self.clear_notifications();
                 self.info_text = "Enter your TOTP code from the authenticator app.".to_string();
                 self.totp_field.focus();
             }
@@ -487,7 +497,7 @@ impl AuthWindow {
                 self.stage = AuthStage::Add2fa {
                     secret: add2fa.secret.clone(),
                 };
-                self.error_text.clear();
+                self.clear_notifications();
                 self.info_text = format!(
                     "Your 2FA secret: {}\nSave it in your authenticator app!",
                     add2fa.secret
@@ -602,7 +612,7 @@ impl AuthWindow {
         if !self.error_text.is_empty() {
             let mut error = Text::new(&self.error_text, font, 14);
             error.set_fill_color(Color::rgb(200, 40, 40));
-            error.set_position((90.0, 370.0));
+            error.set_position((90.0, 350.0));
             self.window.draw(&error);
         }
 
@@ -610,7 +620,7 @@ impl AuthWindow {
         if !self.info_text.is_empty() && self.stage == AuthStage::Credentials {
             let mut info = Text::new(&self.info_text, font, 14);
             info.set_fill_color(Color::rgb(30, 120, 30));
-            info.set_position((50.0, 370.0));
+            info.set_position((50.0, 372.0));
             self.window.draw(&info);
         }
 
