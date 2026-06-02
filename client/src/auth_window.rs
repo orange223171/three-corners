@@ -39,7 +39,9 @@ enum AuthStage {
     Totp,
     /// Showing 2FA secret (after signup — user should save this)
     Add2fa { secret: String },
-    /// Authentication complete
+    /// Auth succeeded — show Continue button to proceed
+    Authenticated,
+    /// Authentication complete — window will close
     Done,
 }
 
@@ -64,6 +66,7 @@ pub struct AuthWindow {
     submit_totp_button: Button,
     confirm_add2fa_button: Button,
     back_button: Button,
+    continue_button: Button,
 
     // State
     mode: AuthMode,
@@ -112,6 +115,7 @@ impl AuthWindow {
         let submit_totp_button = Button::new("Submit TOTP", (175.0, 240.0), (button_w, button_h));
         let confirm_add2fa_button = Button::new("I saved it", (155.0, 300.0), (190.0, button_h));
         let back_button = Button::new("Back", (175.0, 340.0), (button_w, button_h));
+        let continue_button = Button::new("Continue", (155.0, 280.0), (190.0, button_h));
 
         Self {
             window,
@@ -125,6 +129,7 @@ impl AuthWindow {
             submit_totp_button,
             confirm_add2fa_button,
             back_button,
+            continue_button,
             mode: AuthMode::Login,
             stage: AuthStage::Credentials,
             error_text: String::new(),
@@ -185,7 +190,7 @@ impl AuthWindow {
                 AuthStage::Totp => {
                     self.totp_field.handle_text_entered(unicode);
                 }
-                AuthStage::Done => {}
+                AuthStage::Authenticated | AuthStage::Done => {}
             },
 
             Event::KeyPressed { code, .. } => {
@@ -199,7 +204,7 @@ impl AuthWindow {
                         AuthStage::Totp => {
                             self.totp_field.handle_backspace();
                         }
-                        AuthStage::Done => {}
+                        AuthStage::Authenticated | AuthStage::Done => {}
                     },
                     Key::Tab => {
                         // Toggle focus between login and password fields
@@ -272,7 +277,13 @@ impl AuthWindow {
 
                     AuthStage::Add2fa { .. } => {
                         if self.confirm_add2fa_button.contains(x, y) {
-                            // User confirmed they saved the secret
+                            // User confirmed they saved the secret → show Continue
+                            self.stage = AuthStage::Authenticated;
+                        }
+                    }
+
+                    AuthStage::Authenticated => {
+                        if self.continue_button.contains(x, y) {
                             self.stage = AuthStage::Done;
                         }
                     }
@@ -299,6 +310,10 @@ impl AuthWindow {
                     AuthStage::Add2fa { .. } => {
                         self.confirm_add2fa_button
                             .set_hovered(self.confirm_add2fa_button.contains(x, y));
+                    }
+                    AuthStage::Authenticated => {
+                        self.continue_button
+                            .set_hovered(self.continue_button.contains(x, y));
                     }
                     AuthStage::Done => {}
                 }
@@ -371,7 +386,7 @@ impl AuthWindow {
                 });
             }
 
-            AuthStage::Add2fa { .. } | AuthStage::Done => {}
+            AuthStage::Add2fa { .. } | AuthStage::Authenticated | AuthStage::Done => {}
         }
     }
 
@@ -393,18 +408,17 @@ impl AuthWindow {
         match message {
             Message::Ok => match &self.stage {
                 AuthStage::Credentials => {
-                    // Login or signup succeeded without requiring 2FA
-                    self.stage = AuthStage::Done;
+                    // Login or signup succeeded → show Continue
+                    self.stage = AuthStage::Authenticated;
                 }
                 AuthStage::Totp => {
-                    // TOTP code accepted
-                    self.stage = AuthStage::Done;
+                    // TOTP code accepted → show Continue
+                    self.stage = AuthStage::Authenticated;
                 }
                 AuthStage::Add2fa { .. } => {
-                    // Should not happen, but mark done
-                    self.stage = AuthStage::Done;
+                    self.stage = AuthStage::Authenticated;
                 }
-                AuthStage::Done => {}
+                AuthStage::Authenticated | AuthStage::Done => {}
             },
 
             Message::Error(error_message) => {
@@ -515,6 +529,16 @@ impl AuthWindow {
                 self.window.draw(&confirm);
             }
 
+            AuthStage::Authenticated => {
+                let mut msg = Text::new("Authentication successful!", font, 22);
+                msg.set_fill_color(Color::rgb(30, 120, 30));
+                msg.set_position((120.0, 100.0));
+                self.window.draw(&msg);
+
+                let continue_btn = self.button_with_label(&self.continue_button, "Continue");
+                self.window.draw(&continue_btn);
+            }
+
             AuthStage::Done => {}
         }
 
@@ -548,8 +572,24 @@ impl<'a> Drawable for ButtonWithLabel<'a> {
         target: &mut dyn RenderTarget,
         states: &RenderStates<'texture, 'shader, 'shader_texture>,
     ) {
-        // Draw the original button (background, outline, hover state)
-        self.button.draw(target, states);
+        use sfml::graphics::{RectangleShape, Shape};
+
+        let (bx, by) = self.button.position();
+        let (bw, bh) = self.button.size();
+
+        // Draw background (NOT the original button — avoid label overlap)
+        let mut bg = RectangleShape::new();
+        bg.set_position((bx, by));
+        bg.set_size((bw, bh));
+        if self.button.hovered() {
+            bg.set_fill_color(Color::rgb(90, 140, 220));
+            bg.set_outline_color(Color::rgb(60, 100, 180));
+        } else {
+            bg.set_fill_color(Color::rgb(70, 120, 200));
+            bg.set_outline_color(Color::rgb(50, 90, 160));
+        }
+        bg.set_outline_thickness(2.0);
+        target.draw_with_renderstates(&bg, states);
 
         // Draw custom label centered on the button
         let font =
@@ -557,8 +597,6 @@ impl<'a> Drawable for ButtonWithLabel<'a> {
         let mut text = Text::new(self.label, &font, 18);
         text.set_fill_color(Color::WHITE);
         let bounds = text.local_bounds();
-        let (bx, by) = self.button.position();
-        let (bw, bh) = self.button.size();
         text.set_position((
             bx + (bw - bounds.width) / 2.0,
             by + (bh - bounds.height) / 2.0 - 4.0,

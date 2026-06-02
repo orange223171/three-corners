@@ -6,7 +6,9 @@ use std::{
 };
 
 use db::Db;
-use network_core::message::Message;
+use network_core::{
+    bytes_represented::add_2fa_responce_message::Add2faResponceMessage, message::Message,
+};
 use network_server::connection::{Connection, ConnectionMessage};
 use tokio::{
     sync::{Mutex, mpsc},
@@ -17,9 +19,10 @@ use logic_3c::game::Game;
 use totp_rs::Secret;
 
 use crate::message_handlers::{
-    build_message_handler, destroy_message_handler, error_message_handler, grab_message_handler,
-    log_in_message_handler, player_state_message_handler, set_triangle_message_handler,
-    sign_up_message_handler,
+    add_2fa_request_message_handler, build_message_handler, destroy_message_handler,
+    error_message_handler, grab_message_handler, log_in_message_handler,
+    player_state_message_handler, remove_2fa_message_handler, set_triangle_message_handler,
+    sign_up_message_handler, totp_responce_message_handler,
 };
 
 mod message_handlers;
@@ -108,6 +111,7 @@ async fn message_handler(
                 socket,
                 connections_list,
                 players_list,
+                unauthorized_players_list,
                 game,
                 db,
             )
@@ -117,6 +121,29 @@ async fn message_handler(
         Message::SignUp(sign_up_message) => {
             sign_up_message_handler(sign_up_message, socket, connections_list, db).await
         }
+
+        Message::TotpRequest => (),
+        Message::TotpResponce(totp_responce_message) => {
+            totp_responce_message_handler(
+                totp_responce_message,
+                socket,
+                connections_list,
+                players_list,
+                unauthorized_players_list,
+                game,
+                db,
+            )
+            .await
+        }
+
+        Message::Add2faRequest => {
+            add_2fa_request_message_handler(socket, connections_list, players_list, db).await
+        }
+        Message::Add2faResponce(_) => (),
+        Message::Remove2fa => {
+            remove_2fa_message_handler(socket, connections_list, players_list, db).await
+        }
+
         Message::Build(build_message) => {
             build_message_handler(build_message, socket, connections_list, players_list, game).await
         }

@@ -48,6 +48,10 @@ impl Button {
     pub fn size(&self) -> (f32, f32) {
         self.size
     }
+
+    pub fn hovered(&self) -> bool {
+        self.hovered
+    }
 }
 
 impl Drawable for Button {
