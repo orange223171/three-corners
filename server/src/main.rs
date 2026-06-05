@@ -6,9 +6,7 @@ use std::{
 };
 
 use db::Db;
-use network_core::{
-    bytes_represented::add_2fa_responce_message::Add2faResponceMessage, message::Message,
-};
+use network_core::message::Message;
 use network_server::connection::{Connection, ConnectionMessage};
 use tokio::{
     sync::{Mutex, mpsc},
@@ -16,7 +14,6 @@ use tokio::{
 };
 
 use logic_3c::game::Game;
-use totp_rs::Secret;
 
 use crate::message_handlers::{
     add_2fa_request_message_handler, build_message_handler, destroy_message_handler,
@@ -43,6 +40,7 @@ async fn main() {
 
     let game_mutex = game.clone();
     let connections_list_mutex = connections_list.clone();
+    let (game_over_sender, mut game_over_reciever) = mpsc::channel::<()>(1);
     tokio::spawn(async move {
         let mut interval = time::interval(Duration::from_secs(15));
 
@@ -53,10 +51,18 @@ async fn main() {
 
             let connections_list = connections_list_mutex.lock().await;
 
+            let mut game_over = false;
             for message in messages {
+                if matches!(message, Message::EndGame(_)) {
+                    game_over = true;
+                }
                 for (_, sender) in connections_list.clone() {
                     sender.send(message.clone()).await.unwrap();
                 }
+            }
+            if game_over {
+                let _ = game_over_sender.send(()).await;
+                break;
             }
         }
     });
@@ -64,29 +70,37 @@ async fn main() {
     let mut db = Db::init().await.expect("Error to connect to database");
 
     loop {
-        match connection.reciever.recv().await {
-            Some(connection_message) => match connection_message {
-                ConnectionMessage::Connect(socket, sender) => {
-                    connections_list.lock().await.insert(socket, sender);
+        tokio::select! {
+            connection_message = connection.reciever.recv() => {
+                match connection_message {
+                    Some(connection_message) => match connection_message {
+                        ConnectionMessage::Connect(socket, sender) => {
+                            connections_list.lock().await.insert(socket, sender);
+                        }
+                        ConnectionMessage::Disconnect(socket) => {
+                            connections_list.lock().await.remove(&socket);
+                            players_list.remove(&socket);
+                        }
+                        ConnectionMessage::Message(socket, message) => {
+                            message_handler(
+                                message,
+                                &socket,
+                                &*connections_list.lock().await,
+                                &mut players_list,
+                                &mut unauthoeized_player_list,
+                                &mut *game.lock().await,
+                                &mut db,
+                            )
+                            .await;
+                        }
+                    },
+                    None => break,
                 }
-                ConnectionMessage::Disconnect(socket) => {
-                    connections_list.lock().await.remove(&socket);
-                    players_list.remove(&socket);
-                }
-                ConnectionMessage::Message(socket, message) => {
-                    message_handler(
-                        message,
-                        &socket,
-                        &*connections_list.lock().await,
-                        &mut players_list,
-                        &mut unauthoeized_player_list,
-                        &mut *game.lock().await,
-                        &mut db,
-                    )
-                    .await;
-                }
-            },
-            None => break,
+            }
+            _ = game_over_reciever.recv() => {
+                println!("Game over! Shutting down.");
+                break;
+            }
         }
     }
 }
@@ -168,5 +182,6 @@ async fn message_handler(
         Message::GameDataRequest => {
             game_data_request_message_handler(socket, connections_list, game).await
         }
+        Message::EndGame(_) => {}
     }
 }

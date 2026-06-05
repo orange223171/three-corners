@@ -5,6 +5,7 @@ use core_3c::{building::Building, player_state::PlayerState, vector::Vector};
 pub mod add_2fa_responce_message;
 pub mod build_message;
 pub mod destroy_message;
+pub mod end_game_message;
 pub mod error_message;
 pub mod grab_message;
 pub mod log_in_message;

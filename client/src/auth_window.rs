@@ -1,4 +1,4 @@
-//! Authentication window — handles login, signup and 2FA via RAII SFML window.
+//! Authentication window's definitions
 
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
@@ -35,11 +35,11 @@ enum AuthMode {
 /// Represents the current stage of authentication flow
 #[derive(PartialEq, Clone)]
 enum AuthStage {
-    /// Entering login or signup credentials
-    Credentials,
-    /// TOTP code required (after login for 2FA-enabled accounts)
+    /// Entering login or signup info
+    Entering,
+    /// TOTP code required
     Totp,
-    /// Showing 2FA secret (after signup or adding 2FA)
+    /// State which showing 2FA secret
     Add2fa { secret: String },
     /// Logged in — show Add/Remove TOTP + Continue
     LoggedIn,
@@ -47,11 +47,7 @@ enum AuthStage {
     Done,
 }
 
-/// RAII-based authentication window.
-///
-/// On creation, opens an SFML window and establishes a server connection.
-/// Call `run()` to start the event loop; returns `Connection` on success.
-/// The window is automatically closed when the struct is dropped.
+/// An authentication window.
 pub struct AuthWindow {
     window: FBox<RenderWindow>,
     connection: Connection,
@@ -82,8 +78,7 @@ pub struct AuthWindow {
 }
 
 impl AuthWindow {
-    /// Creates a new auth window, connecting to the server.
-    /// Uses RAII: window resources are freed on drop.
+    /// Creates a new auth window, connecting to the server
     pub async fn new() -> Self {
         let window = RenderWindow::new(
             VideoMode::new(500, 500, 32),
@@ -141,7 +136,7 @@ impl AuthWindow {
             add_totp_button,
             remove_totp_button,
             mode: AuthMode::Login,
-            stage: AuthStage::Credentials,
+            stage: AuthStage::Entering,
             error_text: String::new(),
             info_text: String::new(),
             player_name: String::new(),
@@ -150,12 +145,11 @@ impl AuthWindow {
     }
 
     /// Runs the authentication event loop.
-    /// Returns `Some((Connection, player_name))` on successful auth, `None` if window was closed.
+    /// Returns Some((Connection, player_name)) on successful auth, None if window was closed.
     pub async fn run(mut self) -> Option<(Connection, String)> {
         let font =
             Font::from_file("/usr/share/fonts/TTF/DejaVuSans.ttf").expect("Error to load font");
 
-        // Focus the first field initially
         self.login_field.focus();
 
         while self.window.is_open() {
@@ -184,18 +178,20 @@ impl AuthWindow {
         None
     }
 
+    /// Updates fields
     fn update_fields(&mut self, dt: f32) {
         self.login_field.update(dt);
         self.password_field.update(dt);
         self.totp_field.update(dt);
     }
 
+    /// Handles sfml event
     fn handle_event(&mut self, event: Event) {
         match event {
             Event::Closed => self.window.close(),
 
             Event::TextEntered { unicode } => match &self.stage {
-                AuthStage::Credentials | AuthStage::Add2fa { .. } => {
+                AuthStage::Entering | AuthStage::Add2fa { .. } => {
                     self.login_field.handle_text_entered(unicode);
                     self.password_field.handle_text_entered(unicode);
                 }
@@ -209,7 +205,7 @@ impl AuthWindow {
                 use sfml::window::Key;
                 match code {
                     Key::Backspace => match &self.stage {
-                        AuthStage::Credentials | AuthStage::Add2fa { .. } => {
+                        AuthStage::Entering | AuthStage::Add2fa { .. } => {
                             self.login_field.handle_backspace();
                             self.password_field.handle_backspace();
                         }
@@ -245,7 +241,7 @@ impl AuthWindow {
                 let (x, y) = (x as f32, y as f32);
 
                 match &self.stage {
-                    AuthStage::Credentials => {
+                    AuthStage::Entering => {
                         // Focus management
                         if self.login_field.contains(x, y) {
                             self.login_field.focus();
@@ -281,7 +277,7 @@ impl AuthWindow {
                         }
 
                         if self.back_button.contains(x, y) {
-                            self.stage = AuthStage::Credentials;
+                            self.stage = AuthStage::Entering;
                             self.totp_field.clear();
                             self.clear_notifications();
                         }
@@ -315,7 +311,7 @@ impl AuthWindow {
             Event::MouseMoved { x, y } => {
                 let (x, y) = (x as f32, y as f32);
                 match &self.stage {
-                    AuthStage::Credentials => {
+                    AuthStage::Entering => {
                         self.submit_button
                             .set_hovered(self.submit_button.contains(x, y));
                         self.toggle_mode_button
@@ -348,6 +344,7 @@ impl AuthWindow {
         }
     }
 
+    /// Returns rectangle of add 2FA button
     fn add2fa_button_rect(&self) -> (f32, f32, f32, f32) {
         let qr_bottom = self
             .qr_texture
@@ -358,6 +355,7 @@ impl AuthWindow {
         (155.0, y, 190.0, 36.0)
     }
 
+    /// Toggles mode from log in to sign up and back
     fn toggle_mode(&mut self) {
         self.mode = match self.mode {
             AuthMode::Login => AuthMode::SignUp,
@@ -366,14 +364,16 @@ impl AuthWindow {
         self.clear_notifications();
     }
 
+    /// Clears messages or errors about loging
     fn clear_notifications(&mut self) {
         self.error_text.clear();
         self.info_text.clear();
     }
 
+    /// Handles info from current stage
     fn submit_current_stage(&mut self) {
         match &self.stage {
-            AuthStage::Credentials => {
+            AuthStage::Entering => {
                 let player = self.login_field.content().to_string();
                 let password = self.password_field.content().to_string();
 
@@ -435,6 +435,7 @@ impl AuthWindow {
         }
     }
 
+    /// Sends Add2faRequest message
     fn send_add2fa_request(&mut self) {
         self.clear_notifications();
         self.info_text = "Requesting 2FA setup...".to_string();
@@ -444,6 +445,7 @@ impl AuthWindow {
         });
     }
 
+    /// Sends Add2faResponce message
     fn send_remove2fa(&mut self) {
         self.clear_notifications();
         self.info_text = "Removing TOTP...".to_string();
@@ -453,6 +455,7 @@ impl AuthWindow {
         });
     }
 
+    /// Generates totp secret qr code
     fn generate_qr(&mut self, secret: &str) {
         // Normalize: uppercase, strip padding (base32 decodes fine without =)
         let secret = secret.to_uppercase().trim_end_matches('=').to_string();
@@ -516,6 +519,7 @@ impl AuthWindow {
         }
     }
 
+    /// Handles message from server
     fn handle_server_message(&mut self, message: Message) {
         match message {
             Message::LogInSuccessful => {
@@ -525,7 +529,7 @@ impl AuthWindow {
             }
 
             Message::SignUpSuccessful => {
-                self.stage = AuthStage::Credentials;
+                self.stage = AuthStage::Entering;
                 self.mode = AuthMode::Login;
                 self.login_field.clear();
                 self.password_field.clear();
@@ -543,7 +547,7 @@ impl AuthWindow {
                     self.stage = AuthStage::LoggedIn;
                     self.clear_notifications();
                 }
-                AuthStage::Add2fa { .. } | AuthStage::Credentials | AuthStage::Done => {}
+                AuthStage::Add2fa { .. } | AuthStage::Entering | AuthStage::Done => {}
             },
 
             Message::Error(error_message) => {
@@ -586,12 +590,14 @@ impl AuthWindow {
             | Message::Grab(_)
             | Message::SetTriangle(_)
             | Message::PlayerState(_)
-            | Message::GameDataRequest => {
+            | Message::GameDataRequest
+            | Message::EndGame(_) => {
                 // Ignore non-auth messages during auth phase
             }
         }
     }
 
+    /// Draws window
     fn draw(&mut self, font: &Font) {
         self.window.clear(Color::rgb(230, 230, 240));
 
@@ -606,7 +612,7 @@ impl AuthWindow {
         self.window.draw(&title);
 
         match &self.stage {
-            AuthStage::Credentials => {
+            AuthStage::Entering => {
                 // Draw input fields
                 self.window.draw(&self.login_field);
                 self.window.draw(&self.password_field);
@@ -707,7 +713,7 @@ impl AuthWindow {
         }
 
         // Info text (non-error notifications)
-        if !self.info_text.is_empty() && self.stage == AuthStage::Credentials {
+        if !self.info_text.is_empty() && self.stage == AuthStage::Entering {
             let mut info = Text::new(&self.info_text, font, 14);
             info.set_fill_color(Color::rgb(30, 120, 30));
             info.set_position((50.0, 372.0));
@@ -717,6 +723,7 @@ impl AuthWindow {
         self.window.display();
     }
 
+    /// Draws button
     fn draw_button_at(
         &mut self,
         label: &str,

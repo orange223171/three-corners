@@ -6,6 +6,7 @@ use tokio::net::TcpStream;
 use tokio::sync::mpsc;
 use tokio_native_tls::{TlsAcceptor, TlsStream};
 
+use std::fs;
 use std::net::{SocketAddr, TcpListener as StdTcpListener};
 use std::path::Path;
 
@@ -31,9 +32,12 @@ impl Connection {
             .set_nonblocking(true)
             .expect("Error to set nonblocking");
 
+        let password = fs::read_to_string("/etc/three_corners/server/password")
+            .expect("Error to find passwors file");
+
         let tls_acceptor = Self::build_tls_acceptor(
             std::path::Path::new("/etc/three_corners/server/certificate.pfx"),
-            "",
+            password.trim(),
         );
 
         tokio::spawn(Self::connecting_loop(

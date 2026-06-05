@@ -8,7 +8,7 @@ use sfml::{
     },
 };
 
-/// A text input field with label, cursor and optional password masking
+/// A input field
 pub struct InputField {
     label: String,
     content: String,
@@ -21,6 +21,7 @@ pub struct InputField {
 }
 
 impl InputField {
+    /// Returns new fields
     pub fn new(label: &str, position: (f32, f32), size: (f32, f32), password_mode: bool) -> Self {
         Self {
             label: label.to_string(),
@@ -35,27 +36,33 @@ impl InputField {
         }
     }
 
+    /// Returns content of the field
     pub fn content(&self) -> &str {
         &self.content
     }
 
+    /// Sets content of the field
     pub fn set_content(&mut self, content: &str) {
         self.content = content.to_string();
     }
 
+    /// Clears content of the field
     pub fn clear(&mut self) {
         self.content.clear();
     }
 
+    /// Sets focus on the field
     pub fn focus(&mut self) {
         self.focused = true;
         self.cursor_timer = 0.0;
     }
 
+    /// Remove focus from the field
     pub fn unfocus(&mut self) {
         self.focused = false;
     }
 
+    /// Returns true if field is focused
     pub fn focused(&self) -> bool {
         self.focused
     }
@@ -68,7 +75,7 @@ impl InputField {
             && y <= self.position.1 + self.size.1
     }
 
-    /// Update cursor blink timer (call each frame with delta-time in seconds)
+    /// Update cursor blink timer
     pub fn update(&mut self, dt: f32) {
         if self.focused {
             self.cursor_timer += dt;
@@ -78,6 +85,7 @@ impl InputField {
         }
     }
 
+    /// Handles entered contents
     pub fn handle_text_entered(&mut self, unicode: char) {
         if !self.focused {
             return;
@@ -88,6 +96,7 @@ impl InputField {
         }
     }
 
+    /// Handles backspase
     pub fn handle_backspace(&mut self) {
         if self.focused {
             self.content.pop();

@@ -7,8 +7,9 @@ use core_3c::{
 };
 use network_core::{
     bytes_represented::{
-        build_message::BuildMessage, destroy_message::DestroyMessage, grab_message::GrabMessage,
-        player_state_message::PlayerStateMessage, set_triangle_message::SetTriangleMessage,
+        build_message::BuildMessage, destroy_message::DestroyMessage, end_game_message,
+        grab_message::GrabMessage, player_state_message::PlayerStateMessage,
+        set_triangle_message::SetTriangleMessage,
     },
     message::Message,
 };
@@ -115,7 +116,71 @@ impl Game {
             }
         }
 
+        // Check for winner: any player with >= 80% of total in one resource
+        if let Some(winner) = self.check_winner() {
+            v.push(Message::EndGame(end_game_message::EndGameMessage {
+                player: winner,
+            }));
+        }
+
         v
+    }
+
+    /// Returns the winner's name if any player has >= 80% of one resource type.
+    /// Requires at least 2 players. If multiple players tie in different resources,
+    /// returns None (game continues).
+    fn check_winner(&self) -> Option<String> {
+        // Need at least 2 players to have a winner
+        if self.player_states.len() < 2 {
+            return None;
+        }
+
+        let mut total_economic: u32 = 0;
+        let mut total_politic: u32 = 0;
+        let mut total_authority: u32 = 0;
+
+        for state in self.player_states.values() {
+            total_economic += state.economic;
+            total_politic += state.politic;
+            total_authority += state.authority;
+        }
+
+        if total_economic == 0 && total_politic == 0 && total_authority == 0 {
+            return None;
+        }
+
+        let threshold_economic = (total_economic as f64 * 0.8).ceil() as u32;
+        let threshold_politic = (total_politic as f64 * 0.8).ceil() as u32;
+        let threshold_authority = (total_authority as f64 * 0.8).ceil() as u32;
+
+        let mut winner_economic: Option<&str> = None;
+        let mut winner_politic: Option<&str> = None;
+        let mut winner_authority: Option<&str> = None;
+
+        for (player, state) in &self.player_states {
+            if state.economic >= threshold_economic && total_economic > 0 {
+                winner_economic = Some(player);
+            }
+            if state.politic >= threshold_politic && total_politic > 0 {
+                winner_politic = Some(player);
+            }
+            if state.authority >= threshold_authority && total_authority > 0 {
+                winner_authority = Some(player);
+            }
+        }
+
+        // Count how many different resource types have a winner
+        let winners: Vec<&str> = [winner_economic, winner_politic, winner_authority]
+            .iter()
+            .filter_map(|w| *w)
+            .collect();
+
+        if winners.len() == 1 {
+            Some(winners[0].to_string())
+        } else {
+            // Multiple winners in different resources — game continues
+            None
+        }
     }
 
     /// Builds from BuildMessage

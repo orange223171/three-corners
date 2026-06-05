@@ -4,7 +4,7 @@ use core_3c::{board::Board, kit::Kit, player_state::PlayerState, vector::Vector}
 use network_core::message::Message;
 use sfml::{
     cpp::FBox,
-    graphics::{Color, RenderStates, RenderTarget, RenderWindow},
+    graphics::{Color, RenderStates, RenderTarget, RenderWindow, Shape, Transformable},
     window::{ContextSettings, Event, Style, VideoMode, mouse::Button},
 };
 use tokio::sync::{Mutex, mpsc};
@@ -38,12 +38,14 @@ async fn main() {
     let players_states_box = PlayersStatesBox::new(players_states_mutex.clone());
     let board_box = BoardBox::new(board_mutex.clone(), texture_pack);
     let mut actions_menu = ActionsMenu::new(player_name.clone());
+    let winner: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
 
     tokio::spawn(handle_message_loop(
         board_mutex.clone(),
         players_states_mutex.clone(),
         connection.reciever,
         connection.sender.clone(),
+        winner.clone(),
     ));
 
     // Request current game state from server
@@ -67,7 +69,15 @@ async fn main() {
             .await;
         }
 
-        draw(&mut window, &players_states_box, &board_box, &actions_menu);
+        draw(
+            &mut window,
+            &players_states_box,
+            &board_box,
+            &actions_menu,
+            &winner,
+            &player_name,
+        )
+        .await;
     }
 }
 
@@ -95,11 +105,13 @@ async fn init() -> (
     (window, board, players_states, texture_pack)
 }
 
-fn draw(
+async fn draw(
     window: &mut RenderWindow,
     players_states_box: &PlayersStatesBox,
     board_box: &BoardBox,
     actions_menu: &ActionsMenu,
+    winner: &Arc<Mutex<Option<String>>>,
+    player_name: &str,
 ) {
     window.clear(Color::rgb(255, 127, 127));
 
@@ -115,6 +127,39 @@ fn draw(
         .transform
         .translate((3 * window.size().x / 4) as f32, 0.0);
     window.draw_with_renderstates(actions_menu, &actions_menu_render_states);
+
+    // Draw winner overlay if game is over
+    if let Some(ref winner_name) = *winner.lock().await {
+        let font = sfml::graphics::Font::from_file("/usr/share/fonts/TTF/DejaVuSans.ttf")
+            .expect("Error to load font");
+
+        // Semi-transparent background
+        let mut bg = sfml::graphics::RectangleShape::new();
+        bg.set_size((400.0, 120.0));
+        bg.set_position((
+            (window.size().x as f32 - 400.0) / 2.0,
+            (window.size().y as f32 - 120.0) / 2.0,
+        ));
+        bg.set_fill_color(Color::rgba(30, 30, 50, 230));
+        bg.set_outline_color(Color::rgb(255, 215, 0));
+        bg.set_outline_thickness(3.0);
+        window.draw(&bg);
+
+        // Winner text
+        let display_text = if *winner_name == player_name {
+            "You won!".to_string()
+        } else {
+            format!("Player {} won!", winner_name)
+        };
+        let mut text = sfml::graphics::Text::new(&display_text, &font, 28);
+        text.set_fill_color(Color::rgb(255, 215, 0));
+        let bounds = text.local_bounds();
+        text.set_position((
+            (window.size().x as f32 - bounds.width) / 2.0,
+            (window.size().y as f32 - bounds.height) / 2.0 - 10.0,
+        ));
+        window.draw(&text);
+    }
 
     window.display();
 }
@@ -239,6 +284,7 @@ async fn handle_message_loop(
     players_states_mutex: Arc<Mutex<HashMap<String, PlayerState>>>,
     mut reciever: mpsc::Receiver<Message>,
     sender: mpsc::Sender<Message>,
+    winner: Arc<Mutex<Option<String>>>,
 ) {
     loop {
         match reciever.recv().await {
@@ -248,6 +294,7 @@ async fn handle_message_loop(
                     board_mutex.clone(),
                     players_states_mutex.clone(),
                     sender.clone(),
+                    winner.clone(),
                 )
                 .await;
             }
@@ -261,6 +308,7 @@ async fn handler_message(
     board_mutex: Arc<Mutex<Board>>,
     players_states_mutex: Arc<Mutex<HashMap<String, PlayerState>>>,
     sender: mpsc::Sender<Message>,
+    winner: Arc<Mutex<Option<String>>>,
 ) {
     match message {
         Message::Ok => (),
@@ -293,5 +341,8 @@ async fn handler_message(
                 .insert(player_state_message.player, player_state_message.state);
         }
         Message::GameDataRequest => {}
+        Message::EndGame(end_game_message) => {
+            *winner.lock().await = Some(end_game_message.player);
+        }
     }
 }

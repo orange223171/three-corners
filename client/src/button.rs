@@ -8,7 +8,7 @@ use sfml::{
     },
 };
 
-/// A clickable button
+/// A button
 pub struct Button {
     label: String,
     position: (f32, f32),
@@ -18,6 +18,7 @@ pub struct Button {
 }
 
 impl Button {
+    /// Returns new button
     pub fn new(label: &str, position: (f32, f32), size: (f32, f32)) -> Self {
         Self {
             label: label.to_string(),
@@ -37,18 +38,22 @@ impl Button {
             && y <= self.position.1 + self.size.1
     }
 
+    /// Sets the button hovered
     pub fn set_hovered(&mut self, hovered: bool) {
         self.hovered = hovered;
     }
 
+    /// Returns positions of the button
     pub fn position(&self) -> (f32, f32) {
         self.position
     }
 
+    /// Returns size of the button
     pub fn size(&self) -> (f32, f32) {
         self.size
     }
 
+    /// Returns true if button is hovered
     pub fn hovered(&self) -> bool {
         self.hovered
     }

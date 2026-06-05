@@ -3,10 +3,11 @@
 use crate::{
     bytes_represented::{
         BytesRepresented, Decoder, Error, add_2fa_responce_message::Add2faResponceMessage,
-        build_message::BuildMessage, destroy_message::DestroyMessage, error_message::ErrorMessage,
-        grab_message::GrabMessage, log_in_message::LogInMessage,
-        player_state_message::PlayerStateMessage, set_triangle_message::SetTriangleMessage,
-        sign_up_message::SignUpMessage, totp_responce_message::TotpResponceMessage,
+        build_message::BuildMessage, destroy_message::DestroyMessage,
+        end_game_message::EndGameMessage, error_message::ErrorMessage, grab_message::GrabMessage,
+        log_in_message::LogInMessage, player_state_message::PlayerStateMessage,
+        set_triangle_message::SetTriangleMessage, sign_up_message::SignUpMessage,
+        totp_responce_message::TotpResponceMessage,
         version_responce_message::VersionResponceMessage,
     },
     message::Message::Remove2fa,
@@ -37,6 +38,7 @@ const GRAB_MESSAGE: u32 = 34;
 const SET_TRIANGLE_MESSAGE: u32 = 64;
 const PLAYER_STATE_MESSAGE: u32 = 65;
 const GAME_DATA_REQUEST_MESSAGE: u32 = 66;
+const END_GAME_MESSAGE: u32 = 67;
 
 /// A network message
 #[derive(Debug, Clone)]
@@ -67,6 +69,7 @@ pub enum Message {
     SetTriangle(SetTriangleMessage),
     PlayerState(PlayerStateMessage),
     GameDataRequest,
+    EndGame(EndGameMessage),
 }
 
 impl Message {
@@ -143,6 +146,10 @@ impl Message {
             Message::GameDataRequest => {
                 v.append(&mut GAME_DATA_REQUEST_MESSAGE.encode());
             }
+            Message::EndGame(end_game_message) => {
+                v.append(&mut END_GAME_MESSAGE.encode());
+                v.append(&mut end_game_message.encode());
+            }
         }
 
         v.append(&mut vec![0; 8192 - v.len()]);
@@ -200,6 +207,10 @@ impl Message {
                 bytes,
             )?)),
             GAME_DATA_REQUEST_MESSAGE => Result::Ok(Message::GameDataRequest),
+            END_GAME_MESSAGE => Result::Ok(Message::EndGame(EndGameMessage::decode(
+                &mut decoder,
+                bytes,
+            )?)),
 
             _ => Result::Err(Error::UncorrectFormat(
                 String::from("Message"),
